@@ -92,8 +92,8 @@ UPDATE_PACKAGE "luci-app-openclash" "vernesong/OpenClash" "master" "luci-app-ope
 UPDATE_PACKAGE "docker" "openwrt/packages" "master" "net/docker"
 # OpenWrt 官方 dockerd 服务端（核心）
 UPDATE_PACKAGE "dockerd" "openwrt/packages" "master" "net/dockerd"
-# LuCI 网页管理面板（lisaac 维护版）
-UPDATE_PACKAGE "luci-app-dockerman" "lisaac/luci-app-dockerman" "master"
+#替换成兼容immortalwrt稳定版dockerman
+UPDATE_PACKAGE "luci-app-dockerman" "sirpdboy/luci-app-dockerman" "main"
 
 
 #更新软件包版本
