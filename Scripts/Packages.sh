@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
-export OPENCLASH_CORE_AUTO_DOWNLOAD=1
 
 #安装和更新软件包
 UPDATE_PACKAGE() {
@@ -81,11 +80,6 @@ UPDATE_PACKAGE "quickfile" "sbwml/luci-app-quickfile" "main"
 UPDATE_PACKAGE "timecontrol" "sirpdboy/luci-app-timecontrol" "main"
 UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "gecoosac luci-app-timewol luci-app-wolplus"
 UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
-
-UPDATE_PACKAGE "adguardhome" "AdguardTeam/AdGuardHome" "master"
-UPDATE_PACKAGE "luci-app-adguardhome" "zxinghe/luci-app-adguardhome" "main"
-
-UPDATE_PACKAGE "luci-app-openclash" "vernesong/OpenClash" "master" "luci-app-openclash"
 
 #更新软件包版本
 UPDATE_VERSION() {
