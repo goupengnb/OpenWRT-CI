@@ -32,9 +32,6 @@ UPDATE_PACKAGE() {
 
 	# 克隆 GitHub 仓库
 	git clone --depth=1 --single-branch --branch $PKG_BRANCH "https://github.com/$PKG_REPO.git"
-	
-    #adguardhome
-    git clone --depth=1 --single-branch https://github.com/rufengsuixing/luci-app-adguardhome.git
 
 	# 处理克隆的仓库
 	if [[ "$PKG_SPECIAL" == "pkg" ]]; then
