@@ -84,8 +84,7 @@ UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 
 UPDATE_PACKAGE "luci-app-adguardhome" "zxinghe/luci-app-adguardhome" "main"
 
-UPDATE_PACKAGE "luci-app-openclash" "kenzok8/openwrt-packages" "master" "luci-app-openclash"
-
+UPDATE_PACKAGE "luci-app-openclash" "vernesong/OpenClash" "master" "luci-app-openclash"
 
 #更新软件包版本
 UPDATE_VERSION() {
