@@ -88,6 +88,14 @@ UPDATE_PACKAGE "luci-app-adguardhome" "zxinghe/luci-app-adguardhome" "main"
 
 UPDATE_PACKAGE "luci-app-openclash" "vernesong/OpenClash" "master" "luci-app-openclash"
 
+# OpenWrt 官方 docker 客户端
+UPDATE_PACKAGE "docker" "openwrt/packages" "master" "net/docker"
+# OpenWrt 官方 dockerd 服务端（核心）
+UPDATE_PACKAGE "dockerd" "openwrt/packages" "master" "net/dockerd"
+# LuCI 网页管理面板（lisaac 维护版）
+UPDATE_PACKAGE "luci-app-dockerman" "lisaac/luci-app-dockerman" "master"
+
+
 #更新软件包版本
 UPDATE_VERSION() {
 	local PKG_NAME=$1
