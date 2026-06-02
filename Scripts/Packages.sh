@@ -88,12 +88,14 @@ UPDATE_PACKAGE "luci-app-adguardhome" "zxinghe/luci-app-adguardhome" "main"
 
 UPDATE_PACKAGE "luci-app-openclash" "vernesong/OpenClash" "master" "luci-app-openclash"
 
-# OpenWrt 官方 docker 客户端
+#1、底层docker套件：OpenWrt官方
 UPDATE_PACKAGE "docker" "openwrt/packages" "master" "net/docker"
-# OpenWrt 官方 dockerd 服务端（核心）
 UPDATE_PACKAGE "dockerd" "openwrt/packages" "master" "net/dockerd"
-#替换成兼容immortalwrt稳定版dockerman
+UPDATE_PACKAGE "docker-compose" "openwrt/packages" "master" "net/docker-compose"
+UPDATE_PACKAGE "luci-lib-docker" "openwrt/packages" "master" "luci/lib/luci-lib-docker"
+#2、管理面板：个人仓库
 UPDATE_PACKAGE "luci-app-dockerman" "sirpdboy/luci-app-dockerman" "main"
+
 
 
 #更新软件包版本
