@@ -82,7 +82,9 @@ UPDATE_PACKAGE "timecontrol" "sirpdboy/luci-app-timecontrol" "main"
 UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "gecoosac luci-app-timewol luci-app-wolplus"
 UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 
+UPDATE_PACKAGE "adguardhome" "openwrt/packages" "master" "net/adguardhome"
 UPDATE_PACKAGE "luci-app-adguardhome" "zxinghe/luci-app-adguardhome" "main"
+
 
 UPDATE_PACKAGE "luci-app-openclash" "vernesong/OpenClash" "master" "luci-app-openclash"
 
