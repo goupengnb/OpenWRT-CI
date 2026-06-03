@@ -4,6 +4,22 @@
 
 PKG_PATH="$GITHUB_WORKSPACE/wrt/package/"
 
+#自动区分amd64/arm64
+if [[ $ARCH == "x86_64" ]];then ARCH=amd64;else ARCH=arm64;fi
+
+#ImmortalWrt OpenClash固定root目录
+CORE_DIR=package/luci-app-openclash/root/etc/openclash/core
+mkdir -p ${CORE_DIR}
+cd ${CORE_DIR}
+
+#下载Meta内核
+curl -sfLO https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-${ARCH}.tar.gz
+tar -zxf clash-linux-${ARCH}.tar.gz
+mv clash clash_meta
+chmod +x clash_meta
+rm -f *.tar.gz
+
+
 #预置HomeProxy数据
 if [ -d *"homeproxy"* ]; then
 	echo " "
