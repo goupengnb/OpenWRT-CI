@@ -20,16 +20,14 @@ fi
 
 #=========AdGuardHome(AdguardTeam官方仓库)=========
 if [ -d *"luci-app-adguardhome"* ];then
-AGH_ARCH=arm64
-AGH_DIR=luci-app-adguardhome/root/usr/bin/AdGuardHome
-mkdir -p ${AGH_DIR}
-cd ${AGH_DIR}
-#官方仓库：AdguardTeam/AdGuardHome
+ARCH=arm64
+CORE_DIR=luci-app-adguardhome/root/usr/bin/AdGuardHome/AdGuardHome
+mkdir -p ${CORE_DIR}
+cd ${CORE_DIR}
 curl -sfLO https://github.com/AdguardTeam/AdGuardHome/releases/latest/download/AdGuardHome_linux_${AGH_ARCH}.tar.gz
 tar -zxf AdGuardHome_linux_${AGH_ARCH}.tar.gz AdGuardHome/AdGuardHome
-mv AdGuardHome/AdGuardHome ./AdGuardHome
 chmod +x AdGuardHome
-rm -rf AdGuardHome_linux_${AGH_ARCH}.tar.gz AdGuardHome
+rm -f *.tar.gz
 cd $PKG_PATH
 fi
 
