@@ -5,8 +5,9 @@
 PKG_PATH="$GITHUB_WORKSPACE/wrt/package/"
 
 #=========OpenClash Meta预置=========
-if [[ $ARCH == "x86_64" ]];then ARCH=amd64;else ARCH=arm64;fi
-CORE_DIR=package/luci-app-openclash/root/etc/openclash/core
+if [ -d *"luci-app-openclash"* ];then
+ARCH=arm64
+CORE_DIR=luci-app-openclash/root/etc/openclash/core
 mkdir -p ${CORE_DIR}
 cd ${CORE_DIR}
 curl -sfLO https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-${ARCH}.tar.gz
@@ -14,10 +15,13 @@ tar -zxf clash-linux-${ARCH}.tar.gz
 mv clash clash_meta
 chmod +x clash_meta
 rm -f *.tar.gz
+cd $PKG_PATH
+fi
 
 #=========AdGuardHome(AdguardTeam官方仓库)=========
-if [[ $ARCH == "x86_64" ]];then AGH_ARCH=amd64;else AGH_ARCH=arm64;fi
-AGH_DIR=package/luci-app-adguardhome/root/usr/bin/AdGuardHome
+if [ -d *"luci-app-adguardhome"* ];then
+AGH_ARCH=arm64
+AGH_DIR=luci-app-adguardhome/root/usr/bin/AdGuardHome
 mkdir -p ${AGH_DIR}
 cd ${AGH_DIR}
 #官方仓库：AdguardTeam/AdGuardHome
@@ -26,6 +30,8 @@ tar -zxf AdGuardHome_linux_${AGH_ARCH}.tar.gz AdGuardHome/AdGuardHome
 mv AdGuardHome/AdGuardHome ./AdGuardHome
 chmod +x AdGuardHome
 rm -rf AdGuardHome_linux_${AGH_ARCH}.tar.gz AdGuardHome
+cd $PKG_PATH
+fi
 
 
 #预置HomeProxy数据
