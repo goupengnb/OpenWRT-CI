@@ -21,11 +21,15 @@ fi
 #=========AdGuardHome(AdguardTeam官方仓库)=========
 if [ -d *"luci-app-adguardhome"* ];then
 ARCH=arm64
-CORE_DIR=luci-app-adguardhome/root/usr/bin/AdGuardHome/AdGuardHome
+# 目标路径修改为系统/usr/bin
+CORE_DIR=/usr/bin/AdGuardHome
 mkdir -p ${CORE_DIR}
 cd ${CORE_DIR}
-curl -sfLO https://github.com/AdguardTeam/AdGuardHome/releases/latest/download/AdGuardHome_linux_${AGH_ARCH}.tar.gz
-tar -zxf AdGuardHome_linux_${AGH_ARCH}.tar.gz AdGuardHome/AdGuardHome
+curl -sfLO https://github.com/AdguardTeam/AdGuardHome/releases/latest/download/AdGuardHome_linux_${ARCH}.tar.gz
+tar -zxf AdGuardHome_linux_${ARCH}.tar.gz AdGuardHome/AdGuardHome
+# 把内层文件移动到目标目录，删掉解压产生的文件夹
+mv AdGuardHome/AdGuardHome ./
+rm -rf AdGuardHome
 chmod +x AdGuardHome
 rm -f *.tar.gz
 cd $PKG_PATH
