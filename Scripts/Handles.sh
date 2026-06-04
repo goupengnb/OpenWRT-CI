@@ -5,9 +5,11 @@
 PKG_PATH="$GITHUB_WORKSPACE/wrt/package/"
 
 
-# ====== 1、AdGuardHome 独立区块（单独架构判断）======
+# =====AdGuardHome独立判断（替换为CONFIG_TARGET_ARCH_PACKAGES）=====
 if [ -d "luci-app-adguardhome" ];then
-    case "${ARCH}" in
+    # 读取固件架构（diy阶段唯一有效变量）
+    TARGET_ARCH=${CONFIG_TARGET_ARCH_PACKAGES}
+    case "${TARGET_ARCH}" in
     x86_64)
         AGH_ARCH="amd64"
         ;;
@@ -15,10 +17,10 @@ if [ -d "luci-app-adguardhome" ];then
         AGH_ARCH="arm64"
         ;;
     *)
-        echo "AdGuardHome：架构${ARCH}不支持，跳过下载"
+        echo "AdGuardHome：架构${TARGET_ARCH}不支持，跳过下载"
+        unset AGH_ARCH
         ;;
     esac
-
     if [ -n "${AGH_ARCH}" ];then
         CORE_DIR=luci-app-adguardhome/root/usr/bin/AdGuardHome
         mkdir -p ${CORE_DIR}
@@ -31,9 +33,10 @@ if [ -d "luci-app-adguardhome" ];then
     fi
 fi
 
-# ====== 2、OpenClash Meta 独立区块（单独架构判断）======
+# =====OpenClash Meta独立判断=====
 if [ -d "luci-app-openclash" ];then
-    case "${ARCH}" in
+    TARGET_ARCH=${CONFIG_TARGET_ARCH_PACKAGES}
+    case "${TARGET_ARCH}" in
     x86_64)
         OC_ARCH="amd64"
         ;;
@@ -41,10 +44,10 @@ if [ -d "luci-app-openclash" ];then
         OC_ARCH="arm64"
         ;;
     *)
-        echo "OpenClash：架构${ARCH}不支持，跳过下载"
+        echo "OpenClash：架构${TARGET_ARCH}不支持，跳过下载"
+        unset OC_ARCH
         ;;
     esac
-
     if [ -n "${OC_ARCH}" ];then
         CORE_DIR=luci-app-openclash/root/etc/openclash/core
         mkdir -p ${CORE_DIR}
@@ -57,6 +60,7 @@ if [ -d "luci-app-openclash" ];then
         cd $PKG_PATH
     fi
 fi
+
 
 
 
