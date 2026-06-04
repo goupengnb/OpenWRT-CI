@@ -4,77 +4,44 @@
 
 PKG_PATH="$GITHUB_WORKSPACE/wrt/package/"
 
-#=========OpenClash Meta预置=========
+# AdGuardHome
+if [ -d *"luci-app-adguardhome"* ];then
+case $ARCH in
+arm64|aarch64) DL=arm64 ;;
+x86_64|amd64)  DL=amd64 ;;
+*) DL= ;;
+esac
+[ -n "$DL" ] && {
+CORE=luci-app-adguardhome/root/usr/bin/AdGuardHome
+mkdir -p $CORE && cd $CORE
+curl -sfLO https://github.com/AdguardTeam/AdGuardHome/releases/latest/download/AdGuardHome_linux_${DL}.tar.gz
+tar -zxf AdGuardHome_linux_${DL}.tar.gz --strip-components=1 AdGuardHome/AdGuardHome
+chmod +x AdGuardHome
+rm -f *.tar.gz
+cd $PKG_PATH
+}
+fi
+
+# OpenClash Meta
 if [ -d *"luci-app-openclash"* ];then
-ARCH=arm64
-CORE_DIR=luci-app-openclash/root/etc/openclash/core
-mkdir -p ${CORE_DIR}
-cd ${CORE_DIR}
-curl -sfLO https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-${ARCH}.tar.gz
-tar -zxf clash-linux-${ARCH}.tar.gz
+case $ARCH in
+arm64|aarch64) DL=arm64 ;;
+x86_64|amd64)  DL=amd64 ;;
+*) DL= ;;
+esac
+[ -n "$DL" ] && {
+CORE=luci-app-openclash/root/etc/openclash/core
+mkdir -p $CORE && cd $CORE
+curl -sfLO https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-${DL}.tar.gz
+tar -zxf clash-linux-${DL}.tar.gz
 mv clash clash_meta
 chmod +x clash_meta
 rm -f *.tar.gz
 cd $PKG_PATH
-fi
-
-#=========AdGuardHome(AdguardTeam官方仓库)=========
-if [ -d *"luci-app-adguardhome"* ];then
-ARCH=arm64
-# 目标路径修改为系统/usr/bin
-CORE_DIR=luci-app-adguardhome/root/usr/bin/AdGuardHome
-mkdir -p ${CORE_DIR}
-cd ${CORE_DIR}
-curl -sfLO https://github.com/AdguardTeam/AdGuardHome/releases/latest/download/AdGuardHome_linux_${ARCH}.tar.gz
-tar -zxf AdGuardHome_linux_${ARCH}.tar.gz AdGuardHome/AdGuardHome
-# 把内层文件移动到目标目录，删掉解压产生的文件夹
-mv AdGuardHome/AdGuardHome ./
-rm -rf AdGuardHome
-chmod +x AdGuardHome
-rm -f *.tar.gz
-cd $PKG_PATH
+}
 fi
 
 
-#预置HomeProxy数据
-if [ -d *"homeproxy"* ]; then
-	echo " "
-
-	HP_RULE="surge"
-	HP_PATH="homeproxy/root/etc/homeproxy"
-
-	rm -rf ./$HP_PATH/resources/*
-
-	git clone -q --depth=1 --single-branch --branch "release" "https://github.com/Loyalsoldier/surge-rules.git" ./$HP_RULE/
-	cd ./$HP_RULE/ && RES_VER=$(git log -1 --pretty=format:'%s' | grep -o "[0-9]*")
-
-	echo $RES_VER | tee china_ip4.ver china_ip6.ver china_list.ver gfw_list.ver
-	awk -F, '/^IP-CIDR,/{print $2 > "china_ip4.txt"} /^IP-CIDR6,/{print $2 > "china_ip6.txt"}' cncidr.txt
-	sed 's/^\.//g' direct.txt > china_list.txt ; sed 's/^\.//g' gfw.txt > gfw_list.txt
-	mv -f ./{china_*,gfw_list}.{ver,txt} ../$HP_PATH/resources/
-
-	cd .. && rm -rf ./$HP_RULE/
-
-	cd $PKG_PATH && echo "homeproxy date has been updated!"
-fi
-
-#修改argon主题字体和颜色
-if [ -d *"luci-theme-argon"* ]; then
-	echo " " && cd ./luci-theme-argon/
-
-	sed -i "s/primary '.*'/primary '#31a1a1'/; s/'0.2'/'0.5'/; s/'none'/'bing'/; s/'600'/'normal'/" ./luci-app-argon-config/root/etc/config/argon
-
-	cd $PKG_PATH && echo "theme-argon has been fixed!"
-fi
-
-#修改aurora菜单式样
-if [ -d *"luci-app-aurora-config"* ]; then
-	echo " " && cd ./luci-app-aurora-config/
-
-	sed -i "s/nav_submenu_type '.*'/nav_submenu_type 'boxed-dropdown'/g" $(find ./root/usr/share/aurora/ -type f -name "*.template")
-
-	cd $PKG_PATH && echo "theme-aurora has been fixed!"
-fi
 
 #修改mini-diskmanager菜单位置
 if [ -d *"luci-app-mini-diskmanager"* ]; then
