@@ -6,20 +6,16 @@ PKG_PATH="$GITHUB_WORKSPACE/wrt/package/"
 
 # AdGuardHome
 if [ -d *"luci-app-adguardhome"* ];then
-case $ARCH in
-arm64|aarch64) DL=arm64 ;;
-x86_64|amd64)  DL=amd64 ;;
-*) DL= ;;
-esac
-[ -n "$DL" ] && {
-CORE=luci-app-adguardhome/root/usr/bin/AdGuardHome
-mkdir -p $CORE && cd $CORE
-curl -sfLO https://github.com/AdguardTeam/AdGuardHome/releases/latest/download/AdGuardHome_linux_${DL}.tar.gz
-tar -zxf AdGuardHome_linux_${DL}.tar.gz --strip-components=1 AdGuardHome/AdGuardHome
+ARCH=arm64
+CORE_DIR=luci-app-adguardhome/root/usr/bin/AdGuardHome
+mkdir -p ${CORE_DIR}
+cd ${CORE_DIR}
+curl -sfLO https://github.com/AdguardTeam/AdGuardHome/releases/latest/download/AdGuardHome_linux_${ARCH}.tar.gz
+# 直接提取文件到当前目录
+tar -xf AdGuardHome_linux_${ARCH}.tar.gz ./AdGuardHome/AdGuardHome --strip-components=2
 chmod +x AdGuardHome
 rm -f *.tar.gz
 cd $PKG_PATH
-}
 fi
 
 #=========OpenClash Meta预置=========
