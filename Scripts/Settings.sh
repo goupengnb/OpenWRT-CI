@@ -2,56 +2,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
-# AdGuardHome 独立架构判断
-if [ -d "luci-app-adguardhome" ];then
-    echo "【AGH检测架构】ARCH=$ARCH"
-    case "${ARCH}" in
-    x86_64) AGH_ARCH=amd64 ;;
-    aarch64) AGH_ARCH=arm64 ;;
-    *)
-        echo "AdGuardHome：架构${ARCH}不支持，跳过下载"
-        unset AGH_ARCH
-        ;;
-    esac
-    if [ -n "$AGH_ARCH" ];then
-        CORE_DIR=luci-app-adguardhome/root/usr/bin/AdGuardHome
-        mkdir -p ${CORE_DIR}
-        cd ${CORE_DIR}
-        echo "开始下载 AdGuardHome_${AGH_ARCH} 内核"
-        curl -sfLO https://github.com/AdguardTeam/AdGuardHome/releases/latest/download/AdGuardHome_linux_${AGH_ARCH}.tar.gz
-        tar -xf AdGuardHome_linux_${AGH_ARCH}.tar.gz ./AdGuardHome/AdGuardHome --strip-components=2
-        chmod +x AdGuardHome
-        rm -f *.tar.gz
-        echo "✅ AdGuardHome ${AGH_ARCH} 内核下载&部署完成"
-        cd $PKG_PATH
-    fi
-fi
-
-# OpenClash Meta 独立架构判断
-if [ -d "luci-app-openclash" ];then
-    echo "【OC检测架构】ARCH=$ARCH"
-    case "${ARCH}" in
-    x86_64) OC_ARCH=amd64 ;;
-    aarch64) OC_ARCH=arm64 ;;
-    *)
-        echo "OpenClash：架构${ARCH}不支持，跳过下载"
-        unset OC_ARCH
-        ;;
-    esac
-    if [ -n "$OC_ARCH" ];then
-        CORE_DIR=luci-app-openclash/root/etc/openclash/core
-        mkdir -p ${CORE_DIR}
-        cd ${CORE_DIR}
-        echo "开始下载 ClashMeta_${OC_ARCH} 内核"
-        curl -sfLO https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-${OC_ARCH}.tar.gz
-        tar -zxf clash-linux-${OC_ARCH}.tar.gz
-        mv clash clash_meta
-        chmod +x clash_meta
-        rm -f *.tar.gz
-        echo "✅ ClashMeta ${OC_ARCH} 内核下载&部署完成"
-        cd $PKG_PATH
-    fi
-fi
 
 
 #移除luci-app-attendedsysupgrade
