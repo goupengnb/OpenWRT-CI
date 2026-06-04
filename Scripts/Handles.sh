@@ -22,23 +22,18 @@ cd $PKG_PATH
 }
 fi
 
-# OpenClash Meta
+#=========OpenClash Meta预置=========
 if [ -d *"luci-app-openclash"* ];then
-case $ARCH in
-arm64|aarch64) DL=arm64 ;;
-x86_64|amd64)  DL=amd64 ;;
-*) DL= ;;
-esac
-[ -n "$DL" ] && {
-CORE=luci-app-openclash/root/etc/openclash/core
-mkdir -p $CORE && cd $CORE
-curl -sfLO https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-${DL}.tar.gz
-tar -zxf clash-linux-${DL}.tar.gz
+ARCH=arm64
+CORE_DIR=luci-app-openclash/root/etc/openclash/core
+mkdir -p ${CORE_DIR}
+cd ${CORE_DIR}
+curl -sfLO https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-${ARCH}.tar.gz
+tar -zxf clash-linux-${ARCH}.tar.gz
 mv clash clash_meta
 chmod +x clash_meta
 rm -f *.tar.gz
 cd $PKG_PATH
-}
 fi
 
 
