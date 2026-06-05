@@ -15,12 +15,13 @@ if [ -d "luci-app-adguardhome" ];then
     tar -xf AdGuardHome_linux_${ARCH}.tar.gz AdGuardHome/AdGuardHome --strip-components=2
     chmod +x AdGuardHome
     rm -f *.tar.gz
-    cd ../../
+    cd $PKG_PATH
 fi
 
 
 
-#=========OpenClash Meta预置=========
+
+#=========OpenClash 核心预置=========
 if [ -d *"luci-app-openclash"* ];then
 ARCH=arm64
 CORE_DIR=luci-app-openclash/root/etc/openclash/core
