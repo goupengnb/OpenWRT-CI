@@ -3,6 +3,8 @@
 # Copyright (C) 2026 VIKINGYFY
 
 
+echo "STAGING_DIR_ROOT = $STAGING_DIR_ROOT"
+env|grep STAGING_DIR
 
 #移除luci-app-attendedsysupgrade
 sed -i "/attendedsysupgrade/d" $(find ./feeds/luci/collections/ -type f -name "Makefile")
