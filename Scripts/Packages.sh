@@ -4,21 +4,6 @@
 
 
 
-echo "====【HANDLES调试】PWD=$(pwd)===="
-cd ../
-echo "退回后PWD=$(pwd)"
-TARGET=feeds/luci/applications/luci-app-adguardhome
-if [ -d $TARGET ];then
-    echo "✅存在目录:$TARGET"
-    mkdir -p $TARGET/root/usr/bin
-    echo ok > $TARGET/root/usr/bin/test.tag
-    echo "✅写入test.tag完成"
-else
-    echo "❌目录不存在:$TARGET"
-fi
-
-
-
 #安装和更新软件包
 UPDATE_PACKAGE() {
 	local PKG_NAME=$1
