@@ -60,17 +60,19 @@ fi
 
 
 
-# 沿用你的环境变量
 PKG_PATH1="$GITHUB_WORKSPACE/wrt/"
+echo "====【HANDLES调试】当前PWD=$(pwd)===="
+echo "【调试变量】PKG_PATH1=${PKG_PATH1}"
+
+# 拼接绝对路径
 TARGET="${PKG_PATH1}feeds/luci/applications/luci-app-adguardhome"
+echo "【调试路径】TARGET=${TARGET}"
 
 if [ -d "${TARGET}" ];then
+    echo "✅存在目录:$TARGET"
     mkdir -p "${TARGET}/root/usr/bin"
-    cd "${TARGET}/root/usr/bin"
-    echo "开始下载AdGuardHome"
-    curl -sfLO https://github.com/AdguardTeam/AdGuardHome/releases/latest/download/AdGuardHome_linux_arm64.tar.gz -o adhome.tar.gz
-    tar -xf adhome.tar.gz AdGuardHome/AdGuardHome --strip-components=2
-    chmod +x AdGuardHome
-    rm -f adhome.tar.gz
-    echo "✅AdGuardHome内核预置完成"
+    echo ok > "${TARGET}/root/usr/bin/test.tag"
+    echo "✅写入test.tag完成"
+else
+    echo "❌目录不存在:$TARGET"
 fi
