@@ -15,8 +15,9 @@ if [ -d "luci-app-adguardhome" ];then
     tar -xf AdGuardHome_linux_${ARCH}.tar.gz AdGuardHome/AdGuardHome --strip-components=2
     chmod +x AdGuardHome
     rm -f *.tar.gz
-    cd $PKG_PATH
+    cd ../../
 fi
+
 
 
 #=========OpenClash Meta预置=========
