@@ -3,8 +3,12 @@
 # Copyright (C) 2026 VIKINGYFY
 
 
-echo "STAGING_DIR_ROOT = $STAGING_DIR_ROOT"
-env|grep STAGING_DIR
+# 手动导入OpenWrt编译环境，生成STAGING_DIR_ROOT
+source ./include/env.mk
+# 再次打印验证
+echo "载入后STAGING_DIR_ROOT = $STAGING_DIR_ROOT"
+env |grep STAGING_DIR
+
 
 #移除luci-app-attendedsysupgrade
 sed -i "/attendedsysupgrade/d" $(find ./feeds/luci/collections/ -type f -name "Makefile")
