@@ -3,20 +3,6 @@
 # Copyright (C) 2026 VIKINGYFY
 
 
-#=====AdGuardHome预置：写入插件源码root目录=====
-ADG_PLUGIN_ROOT=feeds/luci/applications/luci-app-adguardhome/root/usr/bin
-if [ -d feeds/luci/applications/luci-app-adguardhome ];then
-    mkdir -p ${ADG_PLUGIN_ROOT}
-    cd ${ADG_PLUGIN_ROOT}
-    echo "开始下载AdGuardHome，路径：$(pwd)"
-    curl -sfLO https://github.com/AdguardTeam/AdGuardHome/releases/latest/download/AdGuardHome_linux_arm64.tar.gz -o adhome.tar.gz
-    tar -xf adhome.tar.gz AdGuardHome/AdGuardHome --strip-components=2
-    chmod +x AdGuardHome
-    rm -f adhome.tar.gz
-    echo "✅ AdGuardHome写入插件目录完成"
-    cd -
-fi
-
 
 #移除luci-app-attendedsysupgrade
 sed -i "/attendedsysupgrade/d" $(find ./feeds/luci/collections/ -type f -name "Makefile")
