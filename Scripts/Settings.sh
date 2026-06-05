@@ -3,11 +3,26 @@
 # Copyright (C) 2026 VIKINGYFY
 
 
-# 手动导入OpenWrt编译环境，生成STAGING_DIR_ROOT
-source ./include/env.mk
-# 再次打印验证
-echo "载入后STAGING_DIR_ROOT = $STAGING_DIR_ROOT"
-env |grep STAGING_DIR
+#!/bin/bash
+#=====调试专用脚本，写入测试标记文件，验证能否打进固件/usr/bin=====
+echo "【调试1】脚本初始工作目录：$(pwd)"
+# 切到wrt源码目录
+cd ./wrt
+echo "【调试2】进入wrt目录：$(pwd)"
+
+# 自动搜寻rockchip固件root根目录
+DEST_ROOT=$(find ./build_dir -path "*target-rockchip*/root" -type d 2>/dev/null | head -n1)
+echo "【调试3】检索到固件根目录：$DEST_ROOT"
+
+# 写入测试文件，打包后固件/usr/bin会生成test_ok.txt
+if [ -d "$DEST_ROOT" ];then
+    mkdir -p "${DEST_ROOT}/usr/bin"
+    echo "build_success_$(date)" > "${DEST_ROOT}/usr/bin/test_ok.txt"
+    echo "✅ 测试文件写入成功：${DEST_ROOT}/usr/bin/test_ok.txt"
+else
+    echo "❌ 未找到build_dir内root目录"
+fi
+
 
 
 #移除luci-app-attendedsysupgrade
