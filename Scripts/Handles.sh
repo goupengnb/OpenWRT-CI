@@ -4,26 +4,6 @@
 
 
 
-
-echo "====【HANDLES调试】PWD=$(pwd)===="
-cd ../
-echo "退回后PWD=$(pwd)"
-TARGET=feeds/luci/applications/luci-app-adguardhome
-if [ -d $TARGET ];then
-    echo "✅存在目录:$TARGET"
-    mkdir -p $TARGET/root/usr/bin
-    echo ok > $TARGET/root/usr/bin/test.tag
-    echo "✅写入test.tag完成"
-else
-    echo "❌目录不存在:$TARGET"
-fi
-
-
-
-
-
-
-
 PKG_PATH="$GITHUB_WORKSPACE/wrt/package/"
 
 
@@ -76,4 +56,21 @@ if [ -f "$RUST_FILE" ]; then
 	sed -i 's/ci-llvm=true/ci-llvm=false/g' $RUST_FILE
 
 	cd $PKG_PATH && echo "rust has been fixed!"
+fi
+
+
+
+# 沿用你的环境变量
+PKG_PATH1="$GITHUB_WORKSPACE/wrt/"
+TARGET="${PKG_PATH1}feeds/luci/applications/luci-app-adguardhome"
+
+if [ -d "${TARGET}" ];then
+    mkdir -p "${TARGET}/root/usr/bin"
+    cd "${TARGET}/root/usr/bin"
+    echo "开始下载AdGuardHome"
+    curl -sfLO https://github.com/AdguardTeam/AdGuardHome/releases/latest/download/AdGuardHome_linux_arm64.tar.gz -o adhome.tar.gz
+    tar -xf adhome.tar.gz AdGuardHome/AdGuardHome --strip-components=2
+    chmod +x AdGuardHome
+    rm -f adhome.tar.gz
+    echo "✅AdGuardHome内核预置完成"
 fi
