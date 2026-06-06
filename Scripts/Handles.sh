@@ -12,7 +12,7 @@ if [ -d "luci-app-adguardhome" ];then
     mkdir -p ${CORE_DIR}
     cd ${CORE_DIR}
     curl -sfLO https://github.com/AdguardTeam/AdGuardHome/releases/latest/download/AdGuardHome_linux_${ARCH}.tar.gz
-    tar -xf AdGuardHome_linux_${ARCH}.tar.gz AdGuardHome/AdGuardHome --strip-components=2
+    tar -xf AdGuardHome_linux_${ARCH}.tar.gz ./AdGuardHome/AdGuardHome --strip-components=2
     chmod +x AdGuardHome
     rm -f *.tar.gz
     cd $PKG_PATH
