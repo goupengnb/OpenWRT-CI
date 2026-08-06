@@ -14,7 +14,7 @@
 | 内存 | 4GB LPDDR4X |
 | 存储 | 32GB eMMC + microSD |
 | 网口 | 2× 2.5Gbps（RTL8125，驱动 kmod-r8125） |
-| WiFi | M.2 E-Key RTL8822CE（kmod-rtw88-8822ce） |
+| WiFi | M.2 E-Key MT7921（kmod-mt7921e + kmod-mt7921-firmware） |
 | USB | 2× USB 3.2 Gen1 |
 | 显示 | HDMI 1.4/2.0（kmod-drm-panfrost / kmod-drm-rockchip） |
 
@@ -42,5 +42,5 @@ Actions 页面选择 **R5C** workflow → Run workflow：
 
 - 已删除 MTK / QCA / X86 / TEST 等其它平台的工作流与配置
 - `Packages.sh` 仅保留实际使用的插件：argon 主题、openclash、ddns-go、diskman、adguardhome
-- R5C 板载 WiFi 为 RTL8822CE，原配置中的 `kmod-mt7921e` 已移除
+- R5C WiFi 为 MT7921，配置使用 `kmod-mt7921e` + `kmod-mt7921-firmware`
 - 更多说明见 `R5C-优化说明.md`
