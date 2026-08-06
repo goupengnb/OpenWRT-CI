@@ -21,13 +21,13 @@ CONFIG_TARGET_ROOTFS_INITRAMFS=n
 #内核驱动【极致精简，R5C刚需留存】
 CONFIG_PACKAGE_kmod-bonding=y
 CONFIG_PACKAGE_kmod-dsa=y
-CONFIG_PACKAGE_kmod-dummy=y
+
 CONFIG_PACKAGE_kmod-fs-btrfs=y
-#CONFIG_PACKAGE_kmod-fs-ksmbd=y
+
 CONFIG_PACKAGE_kmod-fuse=y
 CONFIG_PACKAGE_kmod-inet-diag=y
-CONFIG_PACKAGE_kmod-inet-mptcp-diag=y
-CONFIG_PACKAGE_kmod-mtd-rw=y
+
+
 CONFIG_PACKAGE_kmod-netlink-diag=y
 CONFIG_PACKAGE_kmod-nf-nat6=y
 #OpenClash全锥、Tproxy全套nft（缺一不可，全部保留）
@@ -52,7 +52,7 @@ CONFIG_PACKAGE_kmod-usb-core=y
 CONFIG_PACKAGE_kmod-usb-dwc3=y
 CONFIG_PACKAGE_kmod-usb-net=y
 CONFIG_PACKAGE_kmod-usb-storage=y
-CONFIG_PACKAGE_kmod-usb-storage-extras=y
+
 CONFIG_PACKAGE_kmod-usb-storage-uas=y
 CONFIG_PACKAGE_kmod-usb-xhci=y
 #Docker虚拟网卡、Wireguard
@@ -114,3 +114,7 @@ CONFIG_PACKAGE_zoneinfo-core=y
 CONFIG_PACKAGE_tcpdump=y
 CONFIG_PACKAGE_ncat=y
 CONFIG_PACKAGE_wget=y
+
+
+
+

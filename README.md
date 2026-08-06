@@ -1,50 +1,46 @@
-# OpenWRT-CI
+# OpenWRT-CI（NanoPi R5C 专用）
 
-官方版：
+本项目为 [goupengnb/OpenWRT-CI](https://github.com/goupengnb/OpenWRT-CI) 的 R5C 专用精简版：
 
-https://github.com/immortalwrt/immortalwrt.git
+- 仅编译友善 NanoPi R5C 一个设备
+- 每天 05:00（北京时间）自动编译，也可在 Actions 页面手动触发
+- 源码：https://github.com/immortalwrt/immortalwrt.git（master 分支）
 
-自用版：
+# 设备信息（NanoPi R5C）
 
-https://github.com/VIKINGYFY/immortalwrt.git
+| 项目 | 参数 |
+| --- | --- |
+| SoC | Rockchip RK3568B2 |
+| 内存 | 4GB LPDDR4X |
+| 存储 | 32GB eMMC + microSD |
+| 网口 | 2× 2.5Gbps（RTL8125，驱动 kmod-r8125） |
+| WiFi | M.2 E-Key RTL8822CE（kmod-rtw88-8822ce） |
+| USB | 2× USB 3.2 Gen1 |
+| 显示 | HDMI 1.4/2.0（kmod-drm-panfrost / kmod-drm-rockchip） |
 
-# U-BOOT
+# 默认参数
 
-高通版-沉心：
+- 主机名：狗鹏
+- 管理地址：192.168.1.1
+- WiFi：狗鹏 / 12345678（地区 CN，psk2+ccmp）
+- 登录密码：无（仅提示，实际密码请在首次登录时自行设置）
 
-https://github.com/chenxin527/uboot-ipq60xx-emmc-build.git
+# 目录说明
 
-https://github.com/chenxin527/uboot-ipq60xx-nand-build.git
+- `.github/workflows` —— CI 配置（R5C 编译入口 + 公用核心 + 自动清理）
+- `Scripts` —— 自定义脚本（插件拉取 / 修补 / 系统设置）
+- `Config` —— 固件配置（R5C 设备配置 + GENERAL 通用配置）
 
-https://github.com/chenxin527/uboot-ipq60xx-nor-build.git
+# 手动编译
 
-高通版-小猪：
+Actions 页面选择 **R5C** workflow → Run workflow：
 
-https://github.com/1980490718/u-boot-2016.git
+- `PACKAGE`：手动追加插件包，多个用 `\n` 分隔
+- `TEST`：勾选后仅输出配置文件，不编译固件
 
-联发科-全新版：
+# 精简要点
 
-https://github.com/VIKINGYFY/UBOOT-CI/releases
-
-联发科-官方版：
-
-https://drive.wrt.moe/uboot/mediatek
-
-# 固件简要说明
-
-固件每天早上5点自动编译。
-
-固件信息里的时间为编译开始的时间，方便核对上游源码提交时间。
-
-MEDIATEK系列、QUALCOMMAX系列、ROCKCHIP系列、X86系列。
-
-# 目录简要说明
-
-workflows——自定义CI配置
-
-Scripts——自定义脚本
-
-Config——自定义配置
-
-#
-[![Stargazers over time](https://starchart.cc/VIKINGYFY/OpenWRT-CI.svg?variant=adaptive)](https://starchart.cc/VIKINGYFY/OpenWRT-CI)
+- 已删除 MTK / QCA / X86 / TEST 等其它平台的工作流与配置
+- `Packages.sh` 仅保留实际使用的插件：argon 主题、openclash、ddns-go、diskman、adguardhome
+- R5C 板载 WiFi 为 RTL8822CE，原配置中的 `kmod-mt7921e` 已移除
+- 更多说明见 `R5C-优化说明.md`
