@@ -2,8 +2,14 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
+#本仓库只使用 OpenWrt 官方在维护的 feeds（base / packages / luci / routing），
+#所以这里不再从第三方仓库拉取任何插件。
+#（原来的 Argon 主题、OpenClash、ddns-go、diskman、魔改 AdGuardHome 都已移除，
+#  对应功能改用官方 feeds 里的 luci-theme-openwrt-2020 / v2raya+xray-core+pbr /
+#  luci-app-ddns / block-mount+e2fsprogs 等实现。）
+#下面两个函数保留，方便以后需要在【官方】仓库之间替换某个包版本时使用。
 
-#安装和更新软件包
+#替换/覆盖 feed 里的软件包（PKG_REPO 请填写官方仓库）
 UPDATE_PACKAGE() {
 	local PKG_NAME=$1
 	local PKG_REPO=$2
@@ -44,21 +50,8 @@ UPDATE_PACKAGE() {
 }
 
 # 调用示例
-# UPDATE_PACKAGE "OpenAppFilter" "destan19/OpenAppFilter" "master" "" "custom_name1 custom_name2"
-# UPDATE_PACKAGE "open-app-filter" "destan19/OpenAppFilter" "master" "" "luci-app-appfilter oaf" 这样会把原有的open-app-filter，luci-app-appfilter，oaf相关组件删除，不会出现coremark错误。
-
+# UPDATE_PACKAGE "luci-theme-argon" "openwrt/luci" "openwrt-25.12"
 # UPDATE_PACKAGE "包名" "项目地址" "项目分支" "pkg/name，可选，pkg为从大杂烩中单独提取包名插件；name为重命名为包名"
-#以下仅保留R5C固件实际使用的插件（argon主题/openclash/ddns-go/diskman/adguardhome）
-
-UPDATE_PACKAGE "argon" "sbwml/luci-theme-argon" "openwrt-25.12"
-
-UPDATE_PACKAGE "openclash" "vernesong/OpenClash" "dev" "pkg"
-
-
-UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
-UPDATE_PACKAGE "diskman" "sbwml/luci-app-diskman" "main"
-UPDATE_PACKAGE "adguardhome" "goupengnb/luci-app-adguardhome" "main"
-
 
 #更新软件包版本
 UPDATE_VERSION() {

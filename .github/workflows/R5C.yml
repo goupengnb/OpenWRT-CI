@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
-#CI项目：仅编译友善 NanoPi R5C
+#CI项目：只编译友善 NanoPi R5C（OpenWrt 官方源码）
 name: R5C
 
 #CI计划
@@ -36,8 +36,8 @@ jobs:
     with:
       #编译配置
       WRT_CONFIG: R5C
-      #默认主题
-      WRT_THEME: argon
+      #默认主题（官方 luci feed 里的主题）
+      WRT_THEME: openwrt-2020
       #默认主机名
       WRT_NAME: 狗鹏
       #默认WIFI名称
@@ -48,12 +48,12 @@ jobs:
       WRT_IP: 192.168.1.1
       #默认密码，仅作提示，修改无用
       WRT_PW: 无
-      #源码链接
-      WRT_REPO: https://github.com/immortalwrt/immortalwrt.git
-      #源码分支
-      WRT_BRANCH: master
+      #源码链接（OpenWrt 官方）
+      WRT_REPO: https://github.com/openwrt/openwrt.git
+      #源码分支（25.12 稳定分支）
+      WRT_BRANCH: openwrt-25.12
       #源码名称
-      WRT_SOURCE: immortalwrt/immortalwrt
+      WRT_SOURCE: openwrt/openwrt
       #插件调整
       WRT_PACKAGE: ${{inputs.PACKAGE}}
       #仅输出配置文件
