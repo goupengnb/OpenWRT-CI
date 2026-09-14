@@ -26,6 +26,20 @@ else
 	echo "warning: 10_system.js not found, skip version patch"
 fi
 
+#==========内核小优化：打开 fq 队列（BBR 建议的搭配）==========
+#官方 generic 内核配置里是 "# CONFIG_NET_SCH_FQ is not set"，而 OpenWrt 上游并没有对应的
+#kmod 包（kmod-sched-core 里不含 sch_fq），所以在 rockchip 的内核 config 里补一行。
+#OpenWrt 会用 generic + subtarget 两份 config 合成内核配置，subtarget 这份后应用（优先级更高）。
+#写成内置（=y）而不是模块，避免出现“编出来但没有 kmod 包收编”的模块。
+for KCONF in ./target/linux/rockchip/config-* ./target/linux/rockchip/*/config-*; do
+	[ -f "$KCONF" ] || continue
+	if grep -q 'CONFIG_NET_SCH_FQ' "$KCONF"; then
+		echo "kernel config $KCONF already mentions NET_SCH_FQ, skip"
+	else
+		echo 'CONFIG_NET_SCH_FQ=y' >> "$KCONF"
+		echo "kernel config $KCONF: appended CONFIG_NET_SCH_FQ=y"
+	fi
+done
 #==========无线默认值（首次开机生成 /etc/config/wireless）==========
 WIFI_UC="./package/network/config/wifi-scripts/files/lib/wifi/mac80211.uc"
 if [ -f "$WIFI_UC" ]; then

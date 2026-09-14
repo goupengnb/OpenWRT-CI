@@ -62,7 +62,7 @@
 - **代理 / VPN**：v2rayA（`luci-app-v2raya` + `v2raya` + `xray-core`）、PBR 策略路由、OpenVPN、WireGuard（`luci-proto-wireguard`）、Tailscale（`tailscale` + `luci-app-tailscale-community`）
 - **文件共享**：Samba4（`samba4-server` + `luci-app-samba4`）、vsftpd
 - **Docker**：`luci-app-dockerman` + `dockerd` + `docker` + `docker-compose`
-- **内核/网络加速**：`kmod-tcp-bbr` + `net.sch_fq`（BBR）、`kmod-veth`、`kmod-br-netfilter`、`kmod-tun`、`kmod-wireguard`、`kmod-nf-nat6`、`kmod-nft-tproxy/socket/fib`、`wpad-openssl`
+- **内核/网络加速**：`kmod-tcp-bbr`（BBR 拥塞控制）+ 内核打开 `sch_fq` 队列（由 `Scripts/Settings.sh` 给 rockchip 内核配置补一行，因为上游没有对应的 kmod 包）、`kmod-veth`、`kmod-br-netfilter`、`kmod-tun`、`kmod-wireguard`、`kmod-nf-nat6`、`kmod-nft-tproxy/socket/fib`、`wpad-openssl`
 
 # 已替换掉的第三方插件
 
