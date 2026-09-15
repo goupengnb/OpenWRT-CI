@@ -230,7 +230,9 @@ jobs:
           if [ "$MISSING" = "1" ]; then
             echo "::error::有插件没能进入 .config，已中止编译，避免编出缺插件的固件"
             exit 1
-          fi          #顺便把宿主机编译依赖也验一遍：make download / make 都会先跑这一步，
+          fi
+
+          #顺便把宿主机编译依赖也验一遍：make download / make 都会先跑这一步，
           #放在这里 TEST 模式（3 分钟）就能提前发现缺依赖，不用等真编译几个小时
           make prereq -j$(nproc)
 

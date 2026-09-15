@@ -54,6 +54,8 @@
    # 然后在 LuCI 的「系统 - 挂载点」里把 /dev/mmcblk0p3 挂到 /mnt/data 或 /opt
    ```
 
+5. 首次开机进系统后，建议先按下面「DNS 组件的默认启用策略」收一下 DNS，避免四套解析器互相抢 53 端口。
+
 # 插件来源
 
 **官方 feeds 里没有、只能从第三方获取的插件**（都已确认上游作者仍在维护）：
@@ -78,7 +80,40 @@
 - **代理 / 分流**：**OpenClash（第三方，含 mihomo/meta 内核）**、coreutils-nohup/timeout（OpenClash 的 init 脚本要用）、PBR 策略路由（官方，默认不启用）、OpenVPN、WireGuard（`luci-proto-wireguard`）、Tailscale（`tailscale` + `luci-app-tailscale-community`）
 - **文件共享**：Samba4（`samba4-server` + `luci-app-samba4`）、vsftpd
 - **Docker**：`luci-app-dockerman` + `dockerd` + `docker` + `docker-compose`
-- **内核/网络加速**：`kmod-tcp-bbr`（BBR 拥塞控制）+ 内核打开 `sch_fq` 队列（由 `Scripts/Settings.sh` 给 rockchip 内核配置补一行，因为上游没有对应的 kmod 包）、`kmod-veth`、`kmod-br-netfilter`、`kmod-tun`、`kmod-wireguard`、`kmod-nf-nat6`、`kmod-nft-tproxy/socket/fib`、`wpad-openssl`
+- **内核/网络加速**：`kmod-tcp-bbr`（BBR 拥塞控制）+ 内核打开 `sch_fq` 队列并把默认队列设为 `fq`（`Scripts/Settings.sh` 给 rockchip 内核配置补一行，同时写入 `/etc/sysctl.d/13-default-qdisc.conf`；上游没有对应的 kmod 包）、`kmod-veth`、`kmod-br-netfilter`、`kmod-tun`、`kmod-wireguard`、`kmod-nf-nat6`、`kmod-nft-tproxy/socket/fib`、`wpad-openssl`
+
+# DNS 组件的默认启用策略
+
+固件里装了四套 DNS 相关组件：
+
+| 组件 | 作用 | 建议 |
+| --- | --- | --- |
+| `dnsmasq-full` | 系统基础 DNS/DHCP，OpenClash 也依赖它 | **保留，作为唯一对外解析器** |
+| OpenClash（第三方，含 mihomo 内核） | 代理 / 分流，会改写 dnsmasq 的 DNS 配置 | **保留** |
+| `adguardhome` + `luci-app-adguardhome` | 广告过滤面板（首次使用需浏览器打开 `http://192.168.1.1:3000` 初始化） | 要用再开，先关其它三个 |
+| `smartdns` + `luci-app-smartdns` | 多上游测速优选 | 同上 |
+| `https-dns-proxy` + `luci-app-https-dns-proxy` | DoH 代理（默认 `force_dns` 会改 dnsmasq 转发到 127.0.0.1:5053） | 同上 |
+
+**为什么需要手动收一下**：OpenWrt 编固件时会**给每个包的 init 脚本自动建立自启链接**
+（`package/base-files/files/lib/functions.sh` 里的 `default_postinst` 会对所有 `/etc/init.d/*` 执行 `enable`），
+所以这四套是装上就开机自启的；而它们的目标都是 DNS —— AdGuard Home / SmartDNS 想自己监听 53，
+https-dns-proxy 会直接改写 dnsmasq 的转发目标，OpenClash 也要接管 dnsmasq。**同时启用必然互相打架**
+（表现为解析绕来绕去、DNS 泄漏或干脆解析不了）。
+
+刷完机 SSH 进去执行一次即可（关掉不用的，包本身留在系统里，随时能在 LuCI 里再开）：
+
+```sh
+/etc/init.d/smartdns disable
+/etc/init.d/https-dns-proxy disable
+/etc/init.d/adguardhome disable
+
+/etc/init.d/smartdns stop
+/etc/init.d/https-dns-proxy stop
+/etc/init.d/adguardhome stop
+```
+
+如果要改用 AdGuard Home 做主力解析，就反过来：先 `disable` dnsmasq 之外的其它组件、把 OpenClash 的
+「DNS 设置」交给 AdGuard（或让 AdGuard 监听 5353、dnsmasq 转发过去），再 `/etc/init.d/adguardhome enable`。
 
 # 与原始配置的差异
 
@@ -96,7 +131,7 @@
 | `kmod-r8125` | 有 | 官方 R5C 设备定义用的就是内核 `r8169`，改用 `kmod-r8169` |
 | `kmod-drm-panfrost` / `kmod-drm-rockchip` | 有 | 这两个在 rockchip 内核里是内建的（不是 kmod 包），删除 |
 | `kmod-nft-fullcone`、`ipv6helper`、`luci-app-appfilter` 等 | 部分有 | 官方源没有，删除 |
-| 第三方包版本更新脚本（`UPDATE_VERSION`，靠 sed 改 Makefile 版本号） | 启用 | 未启用（容易把包改坏，交给上游自己更新） |
+| 第三方包版本更新脚本（`UPDATE_VERSION`，靠 sed 改 Makefile 版本号） | 启用 | **已删除**（容易把包改坏，交给上游自己更新） |
 | ttyd 免密 root 登录补丁 | 有 | **移除**（等于局域网 root 后门） |
 
 # 目录说明

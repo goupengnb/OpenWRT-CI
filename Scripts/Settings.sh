@@ -40,6 +40,16 @@ for KCONF in ./target/linux/rockchip/config-* ./target/linux/rockchip/*/config-*
 		echo "kernel config $KCONF: appended CONFIG_NET_SCH_FQ=y"
 	fi
 done
+
+#==========默认队列改成 fq（配合 BBR）==========
+#上面把 fq 队列编进了内核，但 OpenWrt 默认队列是 fq_codel（generic config 里是
+#CONFIG_DEFAULT_FQ_CODEL=y），不设 sysctl 的话编进去的 fq 没人用。
+#写进 base-files，随固件落到 /etc/sysctl.d/，开机由 /etc/init.d/sysctl 统一加载。
+QDISC_CONF="./package/base-files/files/etc/sysctl.d/13-default-qdisc.conf"
+mkdir -p "$(dirname "$QDISC_CONF")"
+echo 'net.core.default_qdisc=fq' > "$QDISC_CONF"
+echo "default qdisc: fq ($QDISC_CONF)"
+
 #==========无线默认值（首次开机生成 /etc/config/wireless）==========
 WIFI_UC="./package/network/config/wifi-scripts/files/lib/wifi/mac80211.uc"
 if [ -f "$WIFI_UC" ]; then
