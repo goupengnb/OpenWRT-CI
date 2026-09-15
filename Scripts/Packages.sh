@@ -2,14 +2,20 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
-#本仓库只使用 OpenWrt 官方在维护的 feeds（base / packages / luci / routing），
-#所以这里不再从第三方仓库拉取任何插件。
-#（原来的 Argon 主题、OpenClash、ddns-go、diskman、魔改 AdGuardHome 都已移除，
-#  对应功能改用官方 feeds 里的 luci-theme-openwrt-2020 / v2raya+xray-core+pbr /
-#  luci-app-ddns / block-mount+e2fsprogs 等实现。）
-#下面两个函数保留，方便以后需要在【官方】仓库之间替换某个包版本时使用。
+#=============================================================================
+#插件来源规则
+#  1. OpenWrt 官方 feeds（base / packages / luci / routing）里有的插件，一律用官方的；
+#  2. 官方确实没有的，才从第三方仓库拉，且只挑【原作者仍在维护】的仓库；
+#  3. 所有第三方仓库都在下面列出，改版本/换来源只需要改这里的几行。
+#
+#当前需要第三方的插件（官方 25.12.5 索引里逐个确认过，确实不存在）：
+#  luci-theme-argon / luci-app-argon-config   jerrykuku      原作者，持续更新
+#  luci-app-openclash                         vernesong      dev 分支持续更新
+#  luci-app-diskman                           sbwml          1.0.0 重写版，作者本人维护
+#  luci-app-ddns-go + ddns-go                 sirpdboy       原作者，持续更新
+#=============================================================================
 
-#替换/覆盖 feed 里的软件包（PKG_REPO 请填写官方仓库）
+#替换/新增第三方软件包
 UPDATE_PACKAGE() {
 	local PKG_NAME=$1
 	local PKG_REPO=$2
@@ -17,16 +23,15 @@ UPDATE_PACKAGE() {
 	local PKG_SPECIAL=$4
 	local PKG_LIST=("$PKG_NAME" $5)  # 第5个参数为自定义名称列表
 	local REPO_NAME=${PKG_REPO#*/}
+	local CLONE_DIR="upload-${REPO_NAME}"  # 先克隆到中转目录，避免与目标目录重名时互相覆盖
 
 	echo " "
 
-	# 删除本地可能存在的不同名称的软件包
+	# 删除 feeds 里可能存在的同名软件包，避免包名冲突
 	for NAME in "${PKG_LIST[@]}"; do
-		# 查找匹配的目录
 		echo "Search directory: $NAME"
 		local FOUND_DIRS=$(find ../feeds/luci/ ../feeds/packages/ -maxdepth 3 -type d -iname "*$NAME*" 2>/dev/null)
 
-		# 删除找到的目录
 		if [ -n "$FOUND_DIRS" ]; then
 			while read -r DIR; do
 				rm -rf "$DIR"
@@ -37,21 +42,48 @@ UPDATE_PACKAGE() {
 		fi
 	done
 
-	# 克隆 GitHub 仓库
-	git clone --depth=1 --single-branch --branch $PKG_BRANCH "https://github.com/$PKG_REPO.git"
-
-	# 处理克隆的仓库
-	if [[ "$PKG_SPECIAL" == "pkg" ]]; then
-		find ./$REPO_NAME/*/ -maxdepth 3 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./ \;
-		rm -rf ./$REPO_NAME/
-	elif [[ "$PKG_SPECIAL" == "name" ]]; then
-		mv -f $REPO_NAME $PKG_NAME
+	# 克隆 GitHub 仓库到中转目录
+	rm -rf "$CLONE_DIR"
+	if ! git clone --depth=1 --single-branch --branch "$PKG_BRANCH" "https://github.com/$PKG_REPO.git" "$CLONE_DIR"; then
+		echo "ERROR: git clone failed: $PKG_REPO ($PKG_BRANCH)"
+		return 1
 	fi
+
+	# 处理克隆下来的仓库
+	if [[ "$PKG_SPECIAL" == "pkg" ]]; then
+		#从大杂烩仓库里单独提取目标插件目录
+		find "./$CLONE_DIR" -maxdepth 3 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./ \;
+	elif [[ "$PKG_SPECIAL" == "name" ]]; then
+		#把仓库重命名为指定的包名
+		rm -rf "$PKG_NAME"
+		mv -f "$CLONE_DIR" "$PKG_NAME"
+	else
+		#保持仓库原名（仓库根目录本身就是插件）
+		rm -rf "$REPO_NAME"
+		mv -f "$CLONE_DIR" "$REPO_NAME"
+	fi
+
+	rm -rf "$CLONE_DIR"
 }
 
-# 调用示例
-# UPDATE_PACKAGE "luci-theme-argon" "openwrt/luci" "openwrt-25.12"
-# UPDATE_PACKAGE "包名" "项目地址" "项目分支" "pkg/name，可选，pkg为从大杂烩中单独提取包名插件；name为重命名为包名"
+# 调用格式：
+# UPDATE_PACKAGE "包名" "项目地址" "项目分支" "pkg/name，可选；pkg=从大杂烩仓库里单独提取；name=重命名为包名"
+#
+# 注意：这里只放【官方 feeds 里没有】的插件。
+
+#Argon 主题 + 主题设置面板（作者 jerrykuku，2026 年仍在维护）
+UPDATE_PACKAGE "luci-theme-argon" "jerrykuku/luci-theme-argon" "master"
+UPDATE_PACKAGE "luci-app-argon-config" "jerrykuku/luci-app-argon-config" "master"
+
+#OpenClash（作者 vernesong，dev 分支持续更新；主程序在仓库的 luci-app-openclash 目录下）
+UPDATE_PACKAGE "openclash" "vernesong/OpenClash" "dev" "pkg"
+
+#DiskMan 磁盘管理（sbwml 重写的 1.0.0 版，ucode 实现，适配 25.12/apk）
+UPDATE_PACKAGE "diskman" "sbwml/luci-app-diskman" "main"
+
+#ddns-go（作者 sirpdboy；仓库里含 ddns-go 主程序和 luci-app-ddns-go 两个包）
+UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
+
 
 #更新软件包版本
 UPDATE_VERSION() {

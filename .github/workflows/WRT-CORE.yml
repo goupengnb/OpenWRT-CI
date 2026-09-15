@@ -174,6 +174,50 @@ jobs:
 
           make defconfig -j$(nproc) && make clean -j$(nproc)
 
+      - name: Verify Key Packages
+        run: |
+          cd ./wrt/
+
+          #make defconfig 会把依赖不满足的包【静默】丢掉（变成 "# ... is not set"），
+          #那样编出来的固件表面正常、实际少了插件，所以这里显式检查一遍。
+          EXPECTED="
+          CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_friendlyarm_nanopi-r5c
+          CONFIG_PACKAGE_kmod-r8169
+          CONFIG_PACKAGE_kmod-mt7921e
+          CONFIG_PACKAGE_wpad-openssl
+          CONFIG_PACKAGE_dnsmasq-full
+          CONFIG_PACKAGE_adguardhome
+          CONFIG_PACKAGE_luci-app-adguardhome
+          CONFIG_PACKAGE_luci-theme-argon
+          CONFIG_PACKAGE_luci-app-argon-config
+          CONFIG_PACKAGE_luci-app-openclash
+          CONFIG_PACKAGE_luci-app-diskman
+          CONFIG_PACKAGE_ddns-go
+          CONFIG_PACKAGE_luci-app-ddns-go
+          CONFIG_PACKAGE_luci-app-dockerman
+          "
+          MISSING=0
+          for PKG in $EXPECTED; do
+            if grep -q "^$PKG=y$" .config; then
+              echo "  [OK]   $PKG"
+            elif grep -q "^$PKG=m$" .config; then
+              echo "  [WARN] $PKG = m（不会装进固件，请检查）"
+            else
+              echo "  [FAIL] $PKG 未进入 .config（依赖缺失，已被 defconfig 丢弃）"
+              MISSING=1
+            fi
+          done
+
+          #Argon 是否被设成默认主题（由主题包自带 uci-defaults 完成，这里只确认包在）
+          if grep -q "^CONFIG_PACKAGE_luci-theme-argon=y$" .config; then
+            echo "  [OK]   Argon 主题已启用"
+          fi
+
+          if [ "$MISSING" = "1" ]; then
+            echo "::error::有插件没能进入 .config，已中止编译，避免编出缺插件的固件"
+            exit 1
+          fi
+
       - name: Download Packages
         if: env.WRT_TEST != 'true'
         run: |

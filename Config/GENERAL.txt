@@ -1,9 +1,17 @@
 #===============================================================
-# 通用配置（业务插件）：全部来自 OpenWrt 官方在维护的 feeds
-#   base  = openwrt/openwrt（核心包）
-#   packages = openwrt/packages，luci = openwrt/luci，routing = openwrt/routing
-# 不引入任何第三方插件源（无 Argon 主题 / OpenClash / ddns-go / diskman / 魔改 AdGuardHome）
-# 说明：本文件里的插件名都已在 25.12.5 官方索引里逐个核对过
+# 通用配置（业务插件）
+#
+# 插件来源规则：
+#   1. OpenWrt 官方 feeds（base / packages / luci / routing）里有的 —— 一律用官方的；
+#   2. 官方 feed 里确实没有的 —— 用原作者仍在维护的第三方仓库（见 Scripts/Packages.sh）。
+#
+# 官方 feed 里不存在的第三方插件（已逐个在 25.12.5 官方索引里确认）：
+#   luci-theme-argon / luci-app-argon-config   ← jerrykuku（原作者，持续更新）
+#   luci-app-openclash                         ← vernesong（dev 分支持续更新）
+#   luci-app-diskman                           ← sbwml（1.0.0 重写版，作者本人维护）
+#   luci-app-ddns-go + ddns-go                 ← sirpdboy（原作者，持续更新）
+#
+# 本文件里其余插件名都已在 25.12.5 官方索引里逐个核对过
 #===============================================================
 
 #---------- 编译全局参数 ----------
@@ -13,9 +21,14 @@ CONFIG_DEVEL=y
 #---------- LuCI 界面（官方 luci feed）----------
 CONFIG_PACKAGE_luci=y
 CONFIG_PACKAGE_luci-ssl=y
+#luci-compat / luci-lua-runtime：OpenClash 用的是旧式 Lua 页面，需要这两个才能正常显示
 CONFIG_PACKAGE_luci-compat=y
+CONFIG_PACKAGE_luci-lua-runtime=y
 CONFIG_LUCI_LANG_zh_Hans=y
-#主题：Settings.sh 会把 luci-light 里的 luci-theme-bootstrap 换成 WRT_THEME
+#主题：Argon（第三方，作者 jerrykuku 仍在维护，自带 uci-defaults 会把默认主题设成 Argon）
+CONFIG_PACKAGE_luci-theme-argon=y
+CONFIG_PACKAGE_luci-app-argon-config=y
+#官方主题留一个兜底，体积很小，Argon 万一出问题还能进界面
 CONFIG_PACKAGE_luci-theme-openwrt-2020=y
 CONFIG_PACKAGE_luci-app-firewall=y
 CONFIG_PACKAGE_luci-app-package-manager=y
@@ -56,7 +69,7 @@ CONFIG_PACKAGE_openssh-sftp-server=y
 CONFIG_PACKAGE_zoneinfo-core=y
 CONFIG_PACKAGE_zoneinfo-asia=y
 
-#---------- 存储 / USB（替代第三方 luci-app-diskman）----------
+#---------- 存储 / USB ----------
 #ext4 / f2fs 已经内建在 rockchip 内核里（EXT4_FS=y、F2FS_FS=y），不需要 kmod-fs-ext4/f2fs
 #USB3(XHCI/DWC3)、eMMC(MMC_DW)、PCIe、温度传感器同样是内核内建（=y），不需要额外 kmod
 CONFIG_PACKAGE_block-mount=y
@@ -69,6 +82,10 @@ CONFIG_PACKAGE_e2fsprogs=y
 CONFIG_PACKAGE_dosfstools=y
 CONFIG_PACKAGE_f2fs-tools=y
 CONFIG_PACKAGE_btrfs-progs=y
+#DiskMan 的依赖（wipefs / xfs-mkfs / swap-utils）都会被自动拉进来
+CONFIG_PACKAGE_wipefs=y
+CONFIG_PACKAGE_xfs-mkfs=y
+CONFIG_PACKAGE_swap-utils=y
 CONFIG_PACKAGE_kmod-fs-vfat=y
 CONFIG_PACKAGE_kmod-fs-exfat=y
 CONFIG_PACKAGE_exfat-mkfs=y
@@ -86,12 +103,15 @@ CONFIG_PACKAGE_kmod-usb-storage-uas=y
 CONFIG_PACKAGE_kmod-usb-net-rtl8152=y
 CONFIG_PACKAGE_smartmontools=y
 CONFIG_PACKAGE_hdparm=y
+#第三方：官方没有磁盘管理面板
+CONFIG_PACKAGE_luci-app-diskman=y
 
 #---------- DNS ----------
 #dnsmasq-full：带 DNSSEC / nftset 的完整版，替换官方默认的精简 dnsmasq
+#（OpenClash 也依赖它）
 CONFIG_PACKAGE_dnsmasq-full=y
 # CONFIG_PACKAGE_dnsmasq is not set
-#AdGuard Home：官方 packages 源的广告过滤面板（不是第三方魔改版）
+#AdGuard Home：官方 packages 源的广告过滤面板 + 官方 luci 面板
 CONFIG_PACKAGE_adguardhome=y
 CONFIG_PACKAGE_luci-app-adguardhome=y
 #SmartDNS：多上游测速优选（与 AdGuard 二选一即可，两个都装也不冲突）
@@ -102,10 +122,13 @@ CONFIG_PACKAGE_https-dns-proxy=y
 CONFIG_PACKAGE_luci-app-https-dns-proxy=y
 
 #---------- 网络服务 ----------
-#DDNS：官方 ddns-scripts（替代第三方 ddns-go），已带 Cloudflare 等提供者
+#DDNS：官方 ddns-scripts（已带 Cloudflare 等提供者）
 CONFIG_PACKAGE_luci-app-ddns=y
 CONFIG_PACKAGE_ddns-scripts-services=y
 CONFIG_PACKAGE_ddns-scripts-cloudflare=y
+#第三方：ddns-go（官方没有；srpdboy 维护，支持 Cloudflare / 阿里 / 腾讯等一堆服务商）
+CONFIG_PACKAGE_ddns-go=y
+CONFIG_PACKAGE_luci-app-ddns-go=y
 #UPnP / 网络唤醒
 CONFIG_PACKAGE_luci-app-upnp=y
 CONFIG_PACKAGE_miniupnpd-nftables=y
@@ -115,12 +138,15 @@ CONFIG_PACKAGE_etherwake=y
 CONFIG_PACKAGE_luci-app-sqm=y
 CONFIG_PACKAGE_sqm-scripts=y
 
-#---------- 代理 / VPN（替代第三方 OpenClash）----------
-#v2rayA：官方 packages 源的透明代理 Web 面板，会自动带上 xray-core 和 kmod-nft-tproxy
-CONFIG_PACKAGE_luci-app-v2raya=y
-CONFIG_PACKAGE_v2raya=y
-CONFIG_PACKAGE_xray-core=y
-#PBR：策略路由（按域名/IP 分流）
+#---------- 代理 / 分流 ----------
+#第三方：OpenClash（官方没有；vernesong 维护的 dev 分支，配 mihomo/meta 内核）
+#依赖 dnsmasq-full / bash / curl / ca-bundle / ip-full / ruby / ruby-yaml / kmod-tun / unzip
+#都由它的 Makefile 自动声明，这里不用重复写
+CONFIG_PACKAGE_luci-app-openclash=y
+#OpenClash 的 init 脚本用到 nohup / timeout（官方包里没有声明这两个依赖，这里补上）
+CONFIG_PACKAGE_coreutils-nohup=y
+CONFIG_PACKAGE_coreutils-timeout=y
+#PBR：官方策略路由（按域名/IP 分流），默认不启用，和 OpenClash 不冲突
 CONFIG_PACKAGE_luci-app-pbr=y
 CONFIG_PACKAGE_pbr=y
 #OpenVPN / WireGuard

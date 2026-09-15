@@ -36,8 +36,8 @@ jobs:
     with:
       #编译配置
       WRT_CONFIG: R5C
-      #默认主题（官方 luci feed 里的主题）
-      WRT_THEME: openwrt-2020
+      #默认主题（Argon，第三方：jerrykuku/luci-theme-argon）
+      WRT_THEME: argon
       #默认主机名
       WRT_NAME: 狗鹏
       #默认WIFI名称
