@@ -76,7 +76,7 @@ jobs:
           sudo -E apt -yqq update
           sudo -E apt -yqq install build-essential clang flex bison g++ gawk gcc-multilib g++-multilib \
             gettext git libncurses-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget \
-            dos2unix libfuse-dev
+            dos2unix libfuse-dev python3-pyelftools python3-dev python3-yaml python3-pip libpython3-dev
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
 
@@ -100,10 +100,24 @@ jobs:
 
           cd ./wrt/ && echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
 
-          # GitHub Action 移除国内下载源
+          # 移除 project 的国内镜像。
+          # 注意：这里不能按行 sed 删，JSON 会留下悬空逗号，
+          # scripts/download.pl 解析失败会直接 die，导致【所有】源码都下载不了。
           PROJECT_MIRRORS_FILE="./scripts/projectsmirrors.json"
-          if [ -f "$PROJECT_MIRRORS_FILE" ]; then
-            sed -i '/.cn\//d; /tencent/d; /aliyun/d' "$PROJECT_MIRRORS_FILE"
+          if [ -f "$PROJECT_MIRRORS_FILE" ] && command -v python3 >/dev/null 2>&1; then
+            python3 - "$PROJECT_MIRRORS_FILE" <<'PY'
+          import json, re, sys
+          path = sys.argv[1]
+          with open(path, encoding="utf-8") as f:
+              data = json.load(f)
+          pat = re.compile(r"\.cn/|tencent|aliyun", re.I)
+          data = {k: [m for m in v if not pat.search(m)] for k, v in data.items()}
+          with open(path, "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False, indent="\t")
+          PY
+            echo "projectsmirrors.json: 国内镜像已移除，JSON 合法性已校验"
+          else
+            echo "projectsmirrors.json: 不存在或缺少 python3，跳过"
           fi
 
       - name: Check Scripts
@@ -216,7 +230,9 @@ jobs:
           if [ "$MISSING" = "1" ]; then
             echo "::error::有插件没能进入 .config，已中止编译，避免编出缺插件的固件"
             exit 1
-          fi
+          fi          #顺便把宿主机编译依赖也验一遍：make download / make 都会先跑这一步，
+          #放在这里 TEST 模式（3 分钟）就能提前发现缺依赖，不用等真编译几个小时
+          make prereq -j$(nproc)
 
       - name: Download Packages
         if: env.WRT_TEST != 'true'
