@@ -52,7 +52,8 @@ UPDATE_PACKAGE() {
 	# 处理克隆下来的仓库
 	if [[ "$PKG_SPECIAL" == "pkg" ]]; then
 		#从大杂烩仓库里单独提取目标插件目录
-		find "./$CLONE_DIR" -maxdepth 3 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./ \;
+		#-mindepth 1：排除中转目录本身（它的名字里也带 openclash，会被 -prune 掉导致什么都没提取出来）
+		find "./$CLONE_DIR" -mindepth 1 -maxdepth 3 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./ \;
 	elif [[ "$PKG_SPECIAL" == "name" ]]; then
 		#把仓库重命名为指定的包名
 		rm -rf "$PKG_NAME"
