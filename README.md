@@ -162,6 +162,36 @@ ruby 是 OpenClash 的硬依赖（`+ruby +ruby-yaml`），删不掉，所以只�
 - `WRT-CORE.yml` 的 `Verify Key Packages` 步骤 —— 一旦发现 `CONFIG_RUBY_ENABLE_YJIT=y` 直接中止，
   用 `TEST=true` 跑的话几分钟就能发现，不用等几个小时
 
+# 另一个坑：R5C 的设备包写死了 wpad-basic-mbedtls
+
+官方 `target/linux/rockchip/image/armv8.mk` 里 R5C 的设备定义是：
+
+```make
+define Device/friendlyarm_nanopi-r5c
+  DEVICE_PACKAGES := kmod-r8169 kmod-rtw88-8822ce rtl8822ce-firmware wpad-basic-mbedtls
+endef
+```
+
+`DEVICE_PACKAGES` 会**无条件**叠进镜像，根本不看 `.config`。而本配置要的是功能更全的 `wpad-openssl`
+（WPA3-SAE、802.11r/k/v、OWE、WPS），两者都提供 `hostapd` / `wpa-supplicant` 这两个虚拟包，APK 直接拒绝：
+
+```
+ERROR: unable to select packages:
+  wpad-basic-mbedtls: conflicts: wpad-openssl[hostapd] / wpad-openssl[wpa-supplicant]
+```
+
+现象是**编译跑到最后打镜像时才失败**（前面全绿），2026-09-16 那轮 2 小时就是栽在这。
+
+不用改官方源码。官方留了扩展入口，设备包列表 = `DEVICE_PACKAGES` + `DEVICE_EXTRA_PACKAGES`，
+后者来自配置项，而且支持**减号前缀 = 移除该包**（实现见 `include/image.mk` 的 `merge_packages`）：
+
+```
+CONFIG_TARGET_DEVICE_PACKAGES_rockchip_armv8_DEVICE_friendlyarm_nanopi-r5c="-wpad-basic-mbedtls"
+```
+
+写在 `Config/R5C.txt` 里。`Verify Key Packages` 步骤会 grep 这一行，没生效就直接中止，
+免得又编两小时才炸。
+
 # 目录说明
 
 - `.github/workflows` —— CI 配置（`R5C.yml` 编译入口 + `WRT-CORE.yml` 公用核心 + `Auto-Clean.yml` / `Cache-Clean.yml` 清理）

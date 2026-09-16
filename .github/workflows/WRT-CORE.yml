@@ -244,6 +244,20 @@ jobs:
             echo "  [OK]   Ruby YJIT 已关闭（不会触发 rust 编译器编译）"
           fi
 
+          #R5C 的设备定义（target/linux/rockchip/image/armv8.mk）里给 DEVICE_PACKAGES 写死了
+          #wpad-basic-mbedtls，而 DEVICE_PACKAGES 是无条件叠进镜像、不看 .config 的。
+          #本配置选的是 wpad-openssl，两者都提供 hostapd / wpa-supplicant，打镜像时 apk 会直接报
+          #    ERROR: unable to select packages: ... conflicts: ...
+          #Config/R5C.txt 里用官方的 DEVICE_EXTRA_PACKAGES 机制（减号前缀 = 移除）把它摘掉，
+          #这里确认那一行真的活过了 make defconfig，别到编了 2 小时打镜像时才炸。
+          WPAFIX='CONFIG_TARGET_DEVICE_PACKAGES_rockchip_armv8_DEVICE_friendlyarm_nanopi-r5c="-wpad-basic-mbedtls"'
+          if grep -qF "$WPAFIX" .config; then
+            echo "  [OK]   R5C 设备包已移除 wpad-basic-mbedtls（不会再和 wpad-openssl 冲突）"
+          else
+            echo "::error::设备包移除配置没生效，打镜像时会因 wpad 包冲突失败，已中止"
+            exit 1
+          fi
+
           if [ "$MISSING" = "1" ]; then
             echo "::error::有插件没能进入 .config，已中止编译，避免编出缺插件的固件"
             exit 1
