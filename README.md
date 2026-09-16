@@ -133,6 +133,34 @@ https-dns-proxy 会直接改写 dnsmasq 的转发目标，OpenClash 也要接管
 | `kmod-nft-fullcone`、`ipv6helper`、`luci-app-appfilter` 等 | 部分有 | 官方源没有，删除 |
 | 第三方包版本更新脚本（`UPDATE_VERSION`，靠 sed 改 Makefile 版本号） | 启用 | **已删除**（容易把包改坏，交给上游自己更新） |
 | ttyd 免密 root 登录补丁 | 有 | **移除**（等于局域网 root 后门） |
+| Ruby YJIT（会连带从源码编译 rust 编译器） | 默认打开，单这一步就 3 小时以上，最后被 6 小时上限硬杀 | **已关闭**，并加了 TEST 阶段的快速拦截 |
+
+# 编译耗时与「Ruby YJIT」这个坑
+
+| 阶段 | 冷编译（无缓存） | 有缓存 |
+| --- | --- | --- |
+| 工具链 + 内核 + 全部插件 | 约 1 ～ 1.5 小时 | 约 40 ～ 60 分钟 |
+
+**千万不要打开 Ruby 的 YJIT。**
+
+R5C 是 aarch64，而官方 feeds 里 `lang/ruby/Makefile` 对 aarch64 是默认开 YJIT 的：
+
+```make
+PKG_BUILD_DEPENDS:=ruby/host RUBY_ENABLE_YJIT:rust/host
+config RUBY_ENABLE_YJIT
+	default y if x86_64||aarch64
+```
+
+一旦打开，构建系统就会去 **从源码交叉编译一个 rust 编译器（`rust/host`）**。实测这一项跑 3 小时以上都出不来，
+最后顶到 GitHub 的 6 小时上限被硬杀，连缓存都存不下来（白跑）。上游自己在 Makefile 里也写了
+"It still does not support cross-compiling"。
+
+ruby 是 OpenClash 的硬依赖（`+ruby +ruby-yaml`），删不掉，所以只能把 JIT 关掉。现在是三处一起兜：
+
+- `Config/GENERAL.txt` —— `# CONFIG_RUBY_ENABLE_YJIT is not set`（主要手段）
+- `Scripts/Settings.sh` —— 再写一次，并顺手摘掉 feeds 里的 `rust/host` 编译依赖（双保险）
+- `WRT-CORE.yml` 的 `Verify Key Packages` 步骤 —— 一旦发现 `CONFIG_RUBY_ENABLE_YJIT=y` 直接中止，
+  用 `TEST=true` 跑的话几分钟就能发现，不用等几个小时
 
 # 目录说明
 

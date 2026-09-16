@@ -18,6 +18,17 @@
 CONFIG_CCACHE=y
 CONFIG_DEVEL=y
 
+#---------- 编译期开关：必须关掉 Ruby 的 YJIT ----------
+#OpenClash 依赖 ruby + ruby-yaml（官方 feeds），而官方 feeds 里 ruby 对 aarch64 是默认开 YJIT 的：
+#    lang/ruby/Makefile:  PKG_BUILD_DEPENDS:=ruby/host RUBY_ENABLE_YJIT:rust/host
+#    lang/ruby/Makefile:  config RUBY_ENABLE_YJIT / default y if x86_64||aarch64
+#打开 YJIT 的代价是：从源码交叉编译一个 rust 编译器（rust/host）。
+#实测这一项就要跑 3 小时以上，加上后面的编译会顶到 GitHub 6 小时上限被硬杀，白跑。
+#上游自己在 Makefile 里也写了 "It still does not support cross-compiling"，属于官方都不推荐开的选项。
+#所以这里写死关闭（ZJIT 同理，一起关掉，防止 feed 以后加上）。
+# CONFIG_RUBY_ENABLE_YJIT is not set
+# CONFIG_RUBY_ENABLE_ZJIT is not set
+
 #---------- LuCI 界面（官方 luci feed）----------
 CONFIG_PACKAGE_luci=y
 CONFIG_PACKAGE_luci-ssl=y

@@ -63,6 +63,9 @@ jobs:
   core:
     name: ${{inputs.WRT_SOURCE}}
     runs-on: ubuntu-latest
+    #GitHub 单个作业硬上限是 6 小时，一被硬杀就什么都不剩。
+    #这里设 5.5 小时，让它在被硬杀之前自己结束，日志/收尾步骤都还能正常走完。
+    timeout-minutes: 330
     steps:
       - name: Checkout Projects
         uses: actions/checkout@main
@@ -225,6 +228,20 @@ jobs:
           #Argon 是否被设成默认主题（由主题包自带 uci-defaults 完成，这里只确认包在）
           if grep -q "^CONFIG_PACKAGE_luci-theme-argon=y$" .config; then
             echo "  [OK]   Argon 主题已启用"
+          fi
+
+          #Ruby 的 YJIT 必须是关的。
+          #官方 feeds 的 lang/ruby/Makefile 里写着：
+          #    PKG_BUILD_DEPENDS:=ruby/host RUBY_ENABLE_YJIT:rust/host
+          #    config RUBY_ENABLE_YJIT / default y if x86_64||aarch64
+          #R5C 是 aarch64，一旦开着就会去【从源码交叉编译 rust 编译器(rust/host)】，
+          #实测跑 3 小时以上都出不来（上游也标注了 YJIT 不支持交叉编译）。
+          #放在这里拦，TEST 模式几分钟就能炸出来，不用等几个小时才发现。
+          if grep -q "^CONFIG_RUBY_ENABLE_YJIT=y$" .config; then
+            echo "::error::CONFIG_RUBY_ENABLE_YJIT=y —— 会触发 rust 编译器从源码编译(耗时 3 小时以上)，已中止"
+            exit 1
+          else
+            echo "  [OK]   Ruby YJIT 已关闭（不会触发 rust 编译器编译）"
           fi
 
           if [ "$MISSING" = "1" ]; then
