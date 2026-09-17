@@ -16,12 +16,12 @@
 | 内存 | 4GB LPDDR4X | — |
 | 存储 | 32GB eMMC + microSD 卡槽 | 内核内建（MMC_DW_ROCKCHIP=y） |
 | 网口 | 2× 2.5Gbps（RTL8125B） | `kmod-r8169`（官方设备定义即用内核驱动） |
-| 无线 | M.2 E-Key（PCIe）插槽 | 网卡是 **MT7921**：`kmod-mt7921e` + `kmod-mt7921-firmware`；同时保留官方默认的 RTL8822CE（`kmod-rtw88-8822ce` + `rtl8822ce-firmware`）兼容原厂模块 |
+| 无线 | M.2 E-Key（PCIe）插槽 | 网卡是 **MT7921**：`kmod-mt7921e` + `kmod-mt7921-firmware`；官方设备定义里默认带的 RTL8822CE 驱动/固件（`kmod-rtw88-8822ce` + `rtl8822ce-firmware`）已用设备包移除机制摘掉 |
 | USB | 2× USB 3.2 Gen1 | 内核内建（USB_DWC3=y、USB_XHCI_HCD=y） |
 | 显示 | HDMI | 内核内建（drm/panfrost 都在 rockchip 内核里，不是独立 kmod） |
 | 按键/灯 | Reset 按键、lan/power/heartbeat/wan/wlan 指示灯 | `kmod-gpio-button-hotplug`（官方默认） |
 
-> 说明：R5C **没有板载 WiFi**，无线只能来自 M.2 E-Key 插槽里插的模块，因此固件里同时带 MT7921 和 RTL8822CE 两套驱动，插哪种都能用。
+> 说明：R5C **没有板载 WiFi**，无线只能来自 M.2 E-Key 插槽里插的模块。固件里只带 **MT7921** 一套驱动（本机用的就是它），RTL8822CE 的驱动与固件已移除 —— 以后真要换回原厂 RTL8822CE 模块，需要自己把这两个包加回来，同时把 `Config/R5C.txt` 那行里的 `-kmod-rtw88-8822ce -rtl8822ce-firmware` 去掉。
 
 # 固件说明
 

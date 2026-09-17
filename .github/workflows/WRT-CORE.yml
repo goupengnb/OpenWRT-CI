@@ -370,7 +370,7 @@ jobs:
 
             硬件：RK3568B2 / 4G LPDDR4X / 32G eMMC + microSD
             网口：2× 2.5G（RTL8125B，内核 r8169 驱动）
-            无线：M.2 E-Key 插槽，已适配 MT7921，同时兼容原厂 RTL8822CE
+            无线：M.2 E-Key 插槽，已适配 MT7921（RTL8822CE 的驱动与固件已从设备包中移除）
 
             源码：${{env.WRT_REPO}}
             分支：${{env.WRT_BRANCH}}
