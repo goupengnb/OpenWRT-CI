@@ -4,29 +4,31 @@
 
 PKG_PATH="$GITHUB_WORKSPACE/wrt/package/"
 
-#=========OpenClash Meta 内核预置=========
-#OpenClash 本体不带内核，首次运行需要联网下载 mihomo(meta) 内核。
-#这里在编译阶段就把 arm64 的 meta 内核塞进包里，刷完机开机即可用。
-#下载失败也不中断编译（OpenClash 界面里本身就有"内核更新"按钮可以补）。
-OC_CORE_DIR=$(find "$PKG_PATH" -maxdepth 2 -type d -name "luci-app-openclash" 2>/dev/null | head -n 1)
-if [ -n "$OC_CORE_DIR" ]; then
-	CORE_DIR="$OC_CORE_DIR/root/etc/openclash/core"
-	mkdir -p "$CORE_DIR"
-	if curl -fsSL --retry 3 --retry-delay 3 -o /tmp/clash-meta.tar.gz \
-		"https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-arm64.tar.gz"; then
-		if tar -zxf /tmp/clash-meta.tar.gz -C "$CORE_DIR" 2>/dev/null && [ -f "$CORE_DIR/clash" ]; then
-			mv -f "$CORE_DIR/clash" "$CORE_DIR/clash_meta"
-			chmod +x "$CORE_DIR/clash_meta"
-			echo "OpenClash meta core preinstalled."
-		else
-			echo "warning: unpack OpenClash meta core failed, skip"
-		fi
-	else
-		echo "warning: download OpenClash meta core failed, skip (可在界面里手动更新内核)"
-	fi
-	rm -f /tmp/clash-meta.tar.gz
+#=========HomeProxy 首次开机默认值=========
+#HomeProxy 内核是 sing-box，来自官方 packages feed，本身不需要预置任何东西，
+#但它自带的默认配置里 lan_proxy_mode='disabled'，含义是【不代理任何内网设备】：
+#路由器自己走代理，你电脑和手机根本不进代理，很容易被误以为"装了没生效"。
+#这里往包里塞一个 uci-defaults 脚本（luci.mk 会把包里的 root/ 整个装进固件，
+#/etc/uci-defaults/ 下的脚本由首次开机由 /etc/init.d/boot 执行一次），
+#把默认值改成"仅允许列表外 + 直连列表留空"，等于内网设备全部走代理。
+#节点没法预设（要你自己填一个），routing_mode 保持上游默认的 bypass_mainland_china（大陆直连）。
+HP_DIR=$(find "$PKG_PATH" -maxdepth 2 -type d -name "homeproxy" 2>/dev/null | head -n 1)
+if [ -n "$HP_DIR" ]; then
+	HP_UD_DIR="$HP_DIR/root/etc/uci-defaults"
+	mkdir -p "$HP_UD_DIR"
+	cat > "$HP_UD_DIR/zz-homeproxy-lan-proxy" <<'EOF'
+#!/bin/sh
+#内网设备全部走代理（上游默认是 disabled = 谁都不代理）
+uci -q get homeproxy.control.lan_proxy_mode >/dev/null && {
+	uci -q set homeproxy.control.lan_proxy_mode='except_listed'
+	uci -q commit homeproxy
+}
+exit 0
+EOF
+	chmod 0755 "$HP_UD_DIR/zz-homeproxy-lan-proxy"
+	echo "HomeProxy: 默认 lan_proxy_mode 已改为 except_listed（内网设备全部走代理）"
 else
-	echo "warning: luci-app-openclash not found, skip core preinstall"
+	echo "warning: homeproxy package not found, skip uci-defaults"
 fi
 
 #=========AdGuardHome=========

@@ -207,7 +207,9 @@ jobs:
           CONFIG_PACKAGE_luci-app-adguardhome
           CONFIG_PACKAGE_luci-theme-argon
           CONFIG_PACKAGE_luci-app-argon-config
-          CONFIG_PACKAGE_luci-app-openclash
+          CONFIG_PACKAGE_luci-app-homeproxy
+          CONFIG_PACKAGE_sing-box
+          CONFIG_PACKAGE_ucode-mod-math
           CONFIG_PACKAGE_luci-app-diskman
           CONFIG_PACKAGE_ddns-go
           CONFIG_PACKAGE_luci-app-ddns-go
@@ -230,18 +232,20 @@ jobs:
             echo "  [OK]   Argon 主题已启用"
           fi
 
-          #Ruby 的 YJIT 必须是关的。
-          #官方 feeds 的 lang/ruby/Makefile 里写着：
+          #Ruby 的 YJIT 必须是关的（这是保险丝，正常情况下不会触发）。
+          #2026-09 换成 HomeProxy + 官方 sing-box 之后，固件里已经没有任何包依赖 ruby
+          #（原来只有 OpenClash 依赖 ruby + ruby-yaml），所以这段平时就是走 else 分支。
+          #留着的原因：官方 feeds 的 lang/ruby/Makefile 对 aarch64 是默认开 YJIT 的：
           #    PKG_BUILD_DEPENDS:=ruby/host RUBY_ENABLE_YJIT:rust/host
           #    config RUBY_ENABLE_YJIT / default y if x86_64||aarch64
-          #R5C 是 aarch64，一旦开着就会去【从源码交叉编译 rust 编译器(rust/host)】，
+          #哪天哪个插件又把 ruby 拉回来，就会去【从源码交叉编译 rust 编译器(rust/host)】，
           #实测跑 3 小时以上都出不来（上游也标注了 YJIT 不支持交叉编译）。
           #放在这里拦，TEST 模式几分钟就能炸出来，不用等几个小时才发现。
           if grep -q "^CONFIG_RUBY_ENABLE_YJIT=y$" .config; then
             echo "::error::CONFIG_RUBY_ENABLE_YJIT=y —— 会触发 rust 编译器从源码编译(耗时 3 小时以上)，已中止"
             exit 1
           else
-            echo "  [OK]   Ruby YJIT 已关闭（不会触发 rust 编译器编译）"
+            echo "  [OK]   Ruby YJIT 未启用（当前固件不依赖 ruby）"
           fi
 
           #R5C 的设备定义（target/linux/rockchip/image/armv8.mk）里给 DEVICE_PACKAGES 写死了
@@ -250,7 +254,7 @@ jobs:
           #    ERROR: unable to select packages: ... conflicts: ...
           #Config/R5C.txt 里用官方的 DEVICE_EXTRA_PACKAGES 机制（减号前缀 = 移除）把它摘掉，
           #这里确认那一行真的活过了 make defconfig，别到编了 2 小时打镜像时才炸。
-          WPAFIX='CONFIG_TARGET_DEVICE_PACKAGES_rockchip_armv8_DEVICE_friendlyarm_nanopi-r5c="-wpad-basic-mbedtls"'
+          WPAFIX='CONFIG_TARGET_DEVICE_PACKAGES_rockchip_armv8_DEVICE_friendlyarm_nanopi-r5c="-wpad-basic-mbedtls -kmod-rtw88-8822ce -rtl8822ce-firmware"'
           if grep -qF "$WPAFIX" .config; then
             echo "  [OK]   R5C 设备包已移除 wpad-basic-mbedtls（不会再和 wpad-openssl 冲突）"
           else
@@ -260,6 +264,45 @@ jobs:
 
           if [ "$MISSING" = "1" ]; then
             echo "::error::有插件没能进入 .config，已中止编译，避免编出缺插件的固件"
+            exit 1
+          fi
+
+          #反向检查：明确要求【不要】的包，不能被别的依赖又拉回来。
+          #make defconfig 会把依赖不满足的包丢掉，但反过来"被依赖拉进来"是静默的：
+          #一旦拉回来，固件就白胖了，而且这种问题肉眼很难发现，所以在这里卡死。
+          FORBIDDEN="
+          CONFIG_PACKAGE_luci-theme-openwrt-2020
+          CONFIG_PACKAGE_luci-app-attendedsysupgrade
+          CONFIG_PACKAGE_owut
+          CONFIG_PACKAGE_luci-app-hd-idle
+          CONFIG_PACKAGE_luci-app-samba4
+          CONFIG_PACKAGE_samba4-server
+          CONFIG_PACKAGE_vsftpd
+          CONFIG_PACKAGE_luci-app-smartdns
+          CONFIG_PACKAGE_luci-app-https-dns-proxy
+          CONFIG_PACKAGE_luci-app-ddns
+          CONFIG_PACKAGE_luci-app-upnp
+          CONFIG_PACKAGE_luci-app-wol
+          CONFIG_PACKAGE_luci-app-sqm
+          CONFIG_PACKAGE_luci-app-pbr
+          CONFIG_PACKAGE_luci-app-openvpn
+          CONFIG_PACKAGE_luci-proto-wireguard
+          CONFIG_PACKAGE_luci-app-openclash
+          CONFIG_PACKAGE_kmod-rtw88-8822ce
+          CONFIG_PACKAGE_rtl8822ce-firmware
+          CONFIG_PACKAGE_kmod-wireguard
+          "
+          EXTRA=0
+          for PKG in $FORBIDDEN; do
+            if grep -q "^$PKG=y$" .config; then
+              echo "  [FAIL] $PKG 已被要求删除，但仍被别的包依赖拉进 .config"
+              EXTRA=1
+            fi
+          done
+          if [ "$EXTRA" = "0" ]; then
+            echo "  [OK]   已删除的 $(echo $FORBIDDEN | wc -w) 个包都没被依赖拉回来"
+          else
+            echo "::error::有包被依赖拉回来了，不符合最精简的要求，已中止"
             exit 1
           fi
 

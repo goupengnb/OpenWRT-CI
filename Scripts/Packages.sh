@@ -10,7 +10,7 @@
 #
 #当前需要第三方的插件（官方 25.12.5 索引里逐个确认过，确实不存在）：
 #  luci-theme-argon / luci-app-argon-config   jerrykuku      原作者，持续更新
-#  luci-app-openclash                         vernesong      dev 分支持续更新
+#  luci-app-homeproxy                         immortalwrt    ImmortalWrt 官方团队，sing-box 内核
 #  luci-app-diskman                           sbwml          1.0.0 重写版，作者本人维护
 #  luci-app-ddns-go + ddns-go                 sirpdboy       原作者，持续更新
 #=============================================================================
@@ -52,7 +52,7 @@ UPDATE_PACKAGE() {
 	# 处理克隆下来的仓库
 	if [[ "$PKG_SPECIAL" == "pkg" ]]; then
 		#从大杂烩仓库里单独提取目标插件目录
-		#-mindepth 1：排除中转目录本身（它的名字里也带 openclash，会被 -prune 掉导致什么都没提取出来）
+		#-mindepth 1：排除中转目录本身（它的名字里也带目标插件名，会被 -prune 掉导致什么都没提取出来）
 		find "./$CLONE_DIR" -mindepth 1 -maxdepth 3 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./ \;
 	elif [[ "$PKG_SPECIAL" == "name" ]]; then
 		#把仓库重命名为指定的包名
@@ -76,8 +76,9 @@ UPDATE_PACKAGE() {
 UPDATE_PACKAGE "luci-theme-argon" "jerrykuku/luci-theme-argon" "master"
 UPDATE_PACKAGE "luci-app-argon-config" "jerrykuku/luci-app-argon-config" "master"
 
-#OpenClash（作者 vernesong，dev 分支持续更新；主程序在仓库的 luci-app-openclash 目录下）
-UPDATE_PACKAGE "openclash" "vernesong/OpenClash" "dev" "pkg"
+#HomeProxy（sing-box 系代理面板，ImmortalWrt 官方团队维护；仓库根目录就是包本体）
+#内核 sing-box 来自【官方 packages feed】（25.12 是 1.13.x），不需要第三方
+UPDATE_PACKAGE "homeproxy" "immortalwrt/homeproxy" "master"
 
 #DiskMan 磁盘管理（sbwml 重写的 1.0.0 版，ucode 实现，适配 25.12/apk）
 UPDATE_PACKAGE "diskman" "sbwml/luci-app-diskman" "main"

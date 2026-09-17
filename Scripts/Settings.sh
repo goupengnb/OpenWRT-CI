@@ -81,21 +81,14 @@ echo "CONFIG_PACKAGE_luci=y" >> ./.config
 echo "CONFIG_LUCI_LANG_zh_Hans=y" >> ./.config
 echo "CONFIG_PACKAGE_luci-theme-$WRT_THEME=y" >> ./.config
 
-#==========关掉 Ruby 的 YJIT（防止白白编译 3 小时 rust 编译器）==========
-#官方 feeds 的 lang/ruby/Makefile 里写着：
-#    PKG_BUILD_DEPENDS:=ruby/host RUBY_ENABLE_YJIT:rust/host
-#    config RUBY_ENABLE_YJIT / default y if x86_64||aarch64
-#R5C 是 aarch64，所以默认会把 rust 编译器(host)也拉进来从源码编译，实测 3 小时以上都跑不完，
-#最后顶到 GitHub 的 6 小时上限被硬杀。上游自己都标注了 YJIT 不支持交叉编译。
-#ruby 是 OpenClash 的依赖，删不掉，只能把 JIT 关掉。
-echo "# CONFIG_RUBY_ENABLE_YJIT is not set" >> ./.config
-
-#双保险：万一 Kconfig 又把 YJIT 打开，就直接把 rust 编译依赖摘掉，杜绝那 3 小时
-RUBY_MAKEFILE="./feeds/packages/lang/ruby/Makefile"
-if [ -f "$RUBY_MAKEFILE" ] && grep -q "RUBY_ENABLE_YJIT:rust/host" "$RUBY_MAKEFILE"; then
-	sed -i "s|RUBY_ENABLE_YJIT:rust/host||g" "$RUBY_MAKEFILE"
-	echo "ruby: 已摘除 rust/host 编译依赖（不会再从源码编译 rust）"
-fi
+#==========注：Ruby YJIT 那套处理已随 OpenClash 一起移除==========
+#原来这里会写 "# CONFIG_RUBY_ENABLE_YJIT is not set"，并顺手摘掉 feeds 里 ruby 的
+#rust/host 编译依赖。起因只有一个：OpenClash 硬依赖 ruby + ruby-yaml，而官方 feeds 的
+#lang/ruby/Makefile 对 aarch64 默认开 YJIT，会去从源码交叉编译 rust 编译器，
+#实测 3 小时以上都跑不完，最后顶到 GitHub 的 6 小时上限被硬杀。
+#2026-09 移除 OpenClash（改用 HomeProxy + 官方 feed 的 sing-box）后，固件里已经没有任何包
+#依赖 ruby，这段配置一并删除。以后若再引入依赖 ruby 的插件，记得把这套处理加回来
+#（WRT-CORE.yml 的 Verify Key Packages 里留了一道 YJIT 检查，TEST 模式几分钟就能拦下来）。
 
 #引入私有扩展配置
 if [ -f "$GITHUB_WORKSPACE/Config/PRIVATE.txt" ]; then

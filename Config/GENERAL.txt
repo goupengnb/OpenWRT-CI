@@ -7,7 +7,7 @@
 #
 # 官方 feed 里不存在的第三方插件（已逐个在 25.12.5 官方索引里确认）：
 #   luci-theme-argon / luci-app-argon-config   ← jerrykuku（原作者，持续更新）
-#   luci-app-openclash                         ← vernesong（dev 分支持续更新）
+#   luci-app-homeproxy                         ← immortalwrt（ImmortalWrt 官方团队，sing-box 内核）
 #   luci-app-diskman                           ← sbwml（1.0.0 重写版，作者本人维护）
 #   luci-app-ddns-go + ddns-go                 ← sirpdboy（原作者，持续更新）
 #
@@ -18,46 +18,27 @@
 CONFIG_CCACHE=y
 CONFIG_DEVEL=y
 
-#---------- 编译期开关：必须关掉 Ruby 的 YJIT ----------
-#OpenClash 依赖 ruby + ruby-yaml（官方 feeds），而官方 feeds 里 ruby 对 aarch64 是默认开 YJIT 的：
-#    lang/ruby/Makefile:  PKG_BUILD_DEPENDS:=ruby/host RUBY_ENABLE_YJIT:rust/host
-#    lang/ruby/Makefile:  config RUBY_ENABLE_YJIT / default y if x86_64||aarch64
-#打开 YJIT 的代价是：从源码交叉编译一个 rust 编译器（rust/host）。
-#实测这一项就要跑 3 小时以上，加上后面的编译会顶到 GitHub 6 小时上限被硬杀，白跑。
-#上游自己在 Makefile 里也写了 "It still does not support cross-compiling"，属于官方都不推荐开的选项。
-#所以这里写死关闭（ZJIT 同理，一起关掉，防止 feed 以后加上）。
-# CONFIG_RUBY_ENABLE_YJIT is not set
-# CONFIG_RUBY_ENABLE_ZJIT is not set
-
 #---------- LuCI 界面（官方 luci feed）----------
 CONFIG_PACKAGE_luci=y
 CONFIG_PACKAGE_luci-ssl=y
-#luci-compat / luci-lua-runtime：OpenClash 用的是旧式 Lua 页面，需要这两个才能正常显示
-CONFIG_PACKAGE_luci-compat=y
-CONFIG_PACKAGE_luci-lua-runtime=y
 CONFIG_LUCI_LANG_zh_Hans=y
 #主题：Argon（第三方，作者 jerrykuku 仍在维护，自带 uci-defaults 会把默认主题设成 Argon）
 CONFIG_PACKAGE_luci-theme-argon=y
 CONFIG_PACKAGE_luci-app-argon-config=y
-#官方主题留一个兜底，体积很小，Argon 万一出问题还能进界面
-CONFIG_PACKAGE_luci-theme-openwrt-2020=y
+#注：官方主题（luci-theme-openwrt-2020）和在线升级（attendedsysupgrade + owut）按需求去掉了。
+#    Argon 是唯一主题，靠 Scripts/Settings.sh 把 luci 集合里的 theme-bootstrap 换成它。
 CONFIG_PACKAGE_luci-app-firewall=y
 CONFIG_PACKAGE_luci-app-package-manager=y
-#在线升级（ASU）+ 命令行升级客户端
-CONFIG_PACKAGE_luci-app-attendedsysupgrade=y
-CONFIG_PACKAGE_owut=y
 #网页终端 / 网页文件管理 / 自定义命令
 CONFIG_PACKAGE_luci-app-ttyd=y
 CONFIG_PACKAGE_ttyd=y
 CONFIG_PACKAGE_luci-app-filemanager=y
 CONFIG_PACKAGE_luci-app-commands=y
-#流量统计 / 中断均衡 / 硬盘休眠
+#流量统计 / 中断均衡
 CONFIG_PACKAGE_luci-app-nlbwmon=y
 CONFIG_PACKAGE_nlbwmon=y
 CONFIG_PACKAGE_luci-app-irqbalance=y
 CONFIG_PACKAGE_irqbalance=y
-CONFIG_PACKAGE_luci-app-hd-idle=y
-CONFIG_PACKAGE_hd-idle=y
 
 #---------- 系统工具 ----------
 CONFIG_PACKAGE_bash=y
@@ -117,67 +98,48 @@ CONFIG_PACKAGE_hdparm=y
 #第三方：官方没有磁盘管理面板
 CONFIG_PACKAGE_luci-app-diskman=y
 
-#---------- DNS ----------
-#dnsmasq-full：带 DNSSEC / nftset 的完整版，替换官方默认的精简 dnsmasq
-#（OpenClash 也依赖它）
+#---------- DNS（只留 AdGuard Home）----------
+#dnsmasq-full：带 DNSSEC / nftset 的完整版，替换官方默认的精简 dnsmasq。
+#它不是"另一个 DNS 软件"，而是系统的基础解析 + DHCP 服务，
+#AdGuard Home 要挂它的 53 端口做上游，HomeProxy 的分流也要用它，所以必须留着。
 CONFIG_PACKAGE_dnsmasq-full=y
 # CONFIG_PACKAGE_dnsmasq is not set
-#AdGuard Home：官方 packages 源的广告过滤面板 + 官方 luci 面板
+#AdGuard Home：官方 packages 源的广告过滤面板 + 官方 luci 面板（唯一的 DNS 过滤组件）
 CONFIG_PACKAGE_adguardhome=y
 CONFIG_PACKAGE_luci-app-adguardhome=y
-#SmartDNS：多上游测速优选（与 AdGuard 二选一即可，两个都装也不冲突）
-CONFIG_PACKAGE_smartdns=y
-CONFIG_PACKAGE_luci-app-smartdns=y
-#DNS over HTTPS 代理
-CONFIG_PACKAGE_https-dns-proxy=y
-CONFIG_PACKAGE_luci-app-https-dns-proxy=y
+#按需求去掉了 SmartDNS 和 https-dns-proxy：多个 DNS 组件抢 53 端口会互相打架，
+#只留 AdGuard Home 一个，配置反而清楚。
 
-#---------- 网络服务 ----------
-#DDNS：官方 ddns-scripts（已带 Cloudflare 等提供者）
-CONFIG_PACKAGE_luci-app-ddns=y
-CONFIG_PACKAGE_ddns-scripts-services=y
-CONFIG_PACKAGE_ddns-scripts-cloudflare=y
-#第三方：ddns-go（官方没有；srpdboy 维护，支持 Cloudflare / 阿里 / 腾讯等一堆服务商）
+#---------- 网络服务（只留 ddns-go）----------
+#第三方：ddns-go（官方没有；sirpdboy 维护，支持 Cloudflare / 阿里 / 腾讯等一堆服务商）
+#比官方 ddns-scripts 好用得多，所以官方的 luci-app-ddns / ddns-scripts-* 按需求去掉了。
 CONFIG_PACKAGE_ddns-go=y
 CONFIG_PACKAGE_luci-app-ddns-go=y
-#UPnP / 网络唤醒
-CONFIG_PACKAGE_luci-app-upnp=y
-CONFIG_PACKAGE_miniupnpd-nftables=y
-CONFIG_PACKAGE_luci-app-wol=y
-CONFIG_PACKAGE_etherwake=y
-#SQM 智能队列（cake 算法，解决 2.5G 口的缓冲膨胀）
-CONFIG_PACKAGE_luci-app-sqm=y
-CONFIG_PACKAGE_sqm-scripts=y
+#按需求去掉了 UPnP、网络唤醒（WOL）和 SQM 智能队列。
 
 #---------- 代理 / 分流 ----------
-#第三方：OpenClash（官方没有；vernesong 维护的 dev 分支，配 mihomo/meta 内核）
-#依赖 dnsmasq-full / bash / curl / ca-bundle / ip-full / ruby / ruby-yaml / kmod-tun / unzip
-#都由它的 Makefile 自动声明，这里不用重复写
-CONFIG_PACKAGE_luci-app-openclash=y
-#OpenClash 的 init 脚本用到 nohup / timeout（官方包里没有声明这两个依赖，这里补上）
+#第三方：HomeProxy（官方 feed 没有；ImmortalWrt 官方团队维护，sing-box 内核）
+#它的 Makefile 已经声明了 sing-box / firewall4 / kmod-nft-tproxy / ucode-mod-digest，会自动带进来。
+#界面是 ucode + JS 写的，不需要 luci-compat / luci-lua-runtime（那是 OpenClash 的 Lua 页面才要的）
+CONFIG_PACKAGE_luci-app-homeproxy=y
+#sing-box：HomeProxy 的内核，来自【官方 packages feed】（25.12 是 1.13.x）
+CONFIG_PACKAGE_sing-box=y
+#ucode 的 math 模块：HomeProxy 的 generate_client.uc 里写着 import { isnan } from 'math'，
+#但它的 Makefile 没声明这个依赖，漏掉会在生成配置时报错，这里显式补上
+CONFIG_PACKAGE_ucode-mod-math=y
+#coreutils 的 nohup / timeout：HomeProxy 的 init / 更新脚本会用到这两个命令，
+#官方包没声明这两个依赖，体积很小，显式补上
 CONFIG_PACKAGE_coreutils-nohup=y
 CONFIG_PACKAGE_coreutils-timeout=y
-#PBR：官方策略路由（按域名/IP 分流），默认不启用，和 OpenClash 不冲突
-CONFIG_PACKAGE_luci-app-pbr=y
-CONFIG_PACKAGE_pbr=y
-#OpenVPN / WireGuard
-CONFIG_PACKAGE_luci-app-openvpn=y
-CONFIG_PACKAGE_openvpn-openssl=y
-CONFIG_PACKAGE_openvpn-easy-rsa=y
-CONFIG_PACKAGE_luci-proto-wireguard=y
-CONFIG_PACKAGE_wireguard-tools=y
 #Tailscale 异地组网（luci-app-tailscale-community 也在官方 luci 仓库里）
 CONFIG_PACKAGE_tailscale=y
 CONFIG_PACKAGE_luci-app-tailscale-community=y
+#按需求去掉了 PBR 策略路由、OpenVPN、WireGuard：代理只留 HomeProxy 一套。
+#（R5C.txt 里的 kmod-wireguard 也一并去掉了，不留没用的内核模块）
 #透明代理 / 分流需要的内核 nft 扩展
 CONFIG_PACKAGE_kmod-nft-tproxy=y
 CONFIG_PACKAGE_kmod-nft-socket=y
 CONFIG_PACKAGE_kmod-nft-fib=y
-
-#---------- 文件共享 ----------
-CONFIG_PACKAGE_samba4-server=y
-CONFIG_PACKAGE_luci-app-samba4=y
-CONFIG_PACKAGE_vsftpd=y
 
 #---------- Docker ----------
 CONFIG_PACKAGE_luci-app-dockerman=y
